@@ -2,6 +2,7 @@ import configparser
 import json
 import secrets
 
+import pysnow
 import requests
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.params import Form
@@ -11,6 +12,8 @@ app = FastAPI()
 
 config = configparser.ConfigParser()
 config.read('config.ini')
+
+snow_client = pysnow.Client(config.get('snow', 'instance'), user=config.get('snow', 'user'), password=config.get('snow', 'pass'))
 
 api_key = APIKeyHeader(name='X-API-Key')
 
@@ -59,10 +62,7 @@ async def send_order(name: str = Form(...),
         'description' : f'{spec_Instruct}',
         'short_description':f'{name} ordered {quantity} {cocktail}(s) at {location_Map[hole_Num]}'}
 
-    url = config.get('endpoints', 'incurl')
-    user = config.get('creds', 'user')
-    passw = config.get('creds', 'pass')
-    headers = {'Content-Type':'application/json','Accept':'application/json'}
-    resp = requests.post(url, auth=(user,passw), headers = headers, data = json.dumps(inc))
+    incident_resource = snow_client.resource('/table/incident')
+    result = incident_resource.create(payload=inc)
     #Return status ie order failed/created
     #Use OpsGenie API to create OPsGenie alert

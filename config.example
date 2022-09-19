@@ -1,8 +1,7 @@
 [creds]
-user = snow username
-pass = snow password
 token = authentication token
 
-[endpoints]
-incurl = snow incident creation endpoint
-
+[snow]
+instance = snow instance
+user = snow username
+pass = snow password
