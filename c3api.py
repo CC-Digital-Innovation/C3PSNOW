@@ -1,9 +1,8 @@
 import configparser
-import json
 import secrets
+from copy import deepcopy
 
 import pysnow
-import requests
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.params import Form
 from fastapi.security import APIKeyHeader
@@ -66,3 +65,78 @@ async def send_order(name: str = Form(...),
     result = incident_resource.create(payload=inc)
     #Return status ie order failed/created
     #Use OpsGenie API to create OPsGenie alert
+
+def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
+    '''Return new payload ranked based on key_name. Same values result
+    in the same rank. This assumes the payload is already reverse sorted
+    (descending order).
+
+    Args:
+        payload (list[dict]): payload to be ranked
+        key_name (str): name of key to compare, value should be type int
+
+    Returns:
+        list[dict]: new payload with rank key-value
+    '''
+    ranked_payload = []
+    curr_max = 0
+    curr_rank = 1
+    for p in payload:
+        curr = deepcopy(p)
+        curr_rank = curr['rank'] = curr_rank+1 if curr[key_name] < curr_max else curr_rank
+        curr_max = curr[key_name]
+        ranked_payload.append(curr)
+    return ranked_payload
+
+@app.get('/rank/requestors', dependencies=[Depends(authorize)])
+async def get_top_requestors():
+    aggregate_inc_resrc = snow_client.resource('/stats/incident')
+    params = {
+        'sysparm_count': True,
+        'sysparm_group_by': 'u_drink_requester',
+        'sysparm_order_by': 'COUNT^DESC'
+    }
+    aggregate_inc_resrc.parameters.add_custom(params)
+    query = pysnow.QueryBuilder().field('u_drink').is_not_empty()
+    response = aggregate_inc_resrc.get(query).all()
+    payload = [{
+        'name': requestor['groupby_fields'][0]['value'],
+        'total': int(requestor['stats']['count'])
+    } for requestor in response]
+    return _add_rank(payload, 'total')
+
+@app.get('/rank/drinks', dependencies=[Depends(authorize)])
+async def get_top_drinks():
+    aggregate_inc_resrc = snow_client.resource('/stats/incident')
+    params = {
+        'sysparm_count': True,
+        'sysparm_group_by': 'u_drink',
+        'sysparm_order_by': 'COUNT^DESC',
+        'sysparm_display_value': True
+    }
+    aggregate_inc_resrc.parameters.add_custom(params)
+    query = pysnow.QueryBuilder().field('u_drink').is_not_empty()
+    response = aggregate_inc_resrc.get(query).all()
+    payload = [{
+        'name': requestor['groupby_fields'][0]['value'],
+        'total': int(requestor['stats']['count'])
+    } for requestor in response]
+    return _add_rank(payload, 'total')
+
+@app.get('/rank/holes', dependencies=[Depends(authorize)])
+async def get_top_holes():
+    aggregate_inc_resrc = snow_client.resource('/stats/incident')
+    params = {
+        'sysparm_count': True,
+        'sysparm_group_by': 'location',
+        'sysparm_order_by': 'COUNT^DESC',
+        'sysparm_display_value': True
+    }
+    aggregate_inc_resrc.parameters.add_custom(params)
+    query = pysnow.QueryBuilder().field('location').starts_with('Hole')
+    response = aggregate_inc_resrc.get(query).all()
+    payload = [{
+        'name': requestor['groupby_fields'][0]['value'],
+        'total': int(requestor['stats']['count'])
+    } for requestor in response]
+    return _add_rank(payload, 'total')
