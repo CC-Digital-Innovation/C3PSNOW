@@ -2,3 +2,4 @@ uvicorn
 fastapi
 loguru
 requests
+pysnow
