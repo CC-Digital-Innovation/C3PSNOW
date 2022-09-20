@@ -3,3 +3,4 @@ fastapi
 loguru
 requests
 pysnow
+opsgenie-sdk

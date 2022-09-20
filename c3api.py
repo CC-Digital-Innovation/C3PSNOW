@@ -1,7 +1,7 @@
 import configparser
 import secrets
 from copy import deepcopy
-
+import pymods.opsgen as opsgen
 import pysnow
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.params import Form
@@ -65,6 +65,23 @@ async def send_order(name: str = Form(...),
     result = incident_resource.create(payload=inc)
     #Return status ie order failed/created
     #Use OpsGenie API to create OPsGenie alert
+    opsgeninst = opsgen.OpsInstance(config.get('creds', 'opsgentoken'))
+    OpsGenPayload = {
+    'message':f"{inc['short_description']}",
+    #'alias':'python_sample',
+    'description':'Cocktail Order from C3PSnow',
+    'responders':[{
+        'name': 'Sandbox-Developer01',
+        'type': 'team'
+      }],
+    #'actions':['Restart', 'AnExampleAction'],
+    'tags':['development', location_Map[hole_Num]],
+    'details':{'SnowINC': result['sys_id']},
+    #'entity':'An example entity',
+    'priority':'P5'
+  }
+    repl = opsgeninst.createAlert(OpsGenPayload)
+    print(repl)
 
 def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
     '''Return new payload ranked based on key_name. Same values result
