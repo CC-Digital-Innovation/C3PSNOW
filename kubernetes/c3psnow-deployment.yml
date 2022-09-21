@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: c3psnow
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: c3psnow
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'c3psnow'
+        vault.hashicorp.com/agent-inject-secret-config: 'concourse/main/c3psnow'
+        # Environment variable export template
+        vault.hashicorp.com/agent-inject-template-config: |
+          {{ with secret "concourse/main/c3psnow" -}}
+            export API_KEY="{{ .Data.api.token }}"
+            export SNOW_INST="{{ .Data.snow.instance }}"
+            export SNOW_USER="{{ .Data.snow.username }}"
+            export SNOW_PASS="{{ .Data.snow.password }}"
+          {{- end }}
+      labels:
+        app: c3psnow
+    spec:
+      containers:
+      - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow
+        name: c3psnow
+        args:
+          [ '/bin/bash', '-c', 'source /vault/secrets/config && python main.py' ]
+        ports:
+        - containerPort: 8000
+      imagePullSecrets:
+        - name: gitlab-cr

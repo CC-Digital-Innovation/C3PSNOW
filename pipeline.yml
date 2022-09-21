@@ -1,0 +1,46 @@
+resources:
+# resource for triggering pipeline
+- name: c3psnow
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+    branch: feat-environ-keys
+    username: ((git.username))
+    password: ((git.password))
+    ignore_paths:
+    - README.md
+    - pipeline.yaml
+    - kubernetes
+    - .gitignore
+# resource of where to push image
+- name: c3psnow-image
+  type: registry-image
+  icon: gitlab
+  source:
+    repository: ((gitlab.repository))/c3psnow/c3psnow
+    username: ((gitlab.username))
+    password: ((gitlab.password))
+
+jobs:
+- name: build-and-push
+  plan:
+  - get: c3psnow
+    trigger: true
+  - task: build-task-image
+    privileged: true
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: concourse/oci-build-task
+      inputs:
+      - name: c3psnow
+      outputs:
+      - name: image
+      params:
+        CONTEXT: c3psnow
+      run:
+        path: build
+  - put: c3psnow-image
