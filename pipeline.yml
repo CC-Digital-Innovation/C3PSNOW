@@ -44,3 +44,7 @@ jobs:
       run:
         path: build
   - put: c3psnow-image
+    params:
+      image: image/image.tar
+      version: 0.1
+      bump_aliases: true
