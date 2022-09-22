@@ -1,4 +1,3 @@
-import configparser
 import os
 import secrets
 from copy import deepcopy
@@ -8,8 +7,7 @@ import pysnow
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.params import Form
 from fastapi.security import APIKeyHeader
-
-import pymods.opsgen as opsgen
+from pydantic import BaseModel
 
 # load secrets from .env
 dotenv.load_dotenv()
@@ -19,15 +17,16 @@ SNOW_INST = os.getenv('SNOW_INST')
 SNOW_USER = os.getenv('SNOW_USER')
 SNOW_PASS = os.getenv('SNOW_PASS')
 
-# load configurations
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-LOCATION_MAP = dict(config.items('location'))
-
 snow_client = pysnow.Client(SNOW_INST, user=SNOW_USER, password=SNOW_PASS)
 
 app = FastAPI()
+
+class Order(BaseModel):
+    name: str
+    drinks: dict
+    urgency: int
+    spec_Instruct: str = None
+    hole_Num: str
 
 api_key = APIKeyHeader(name='X-API-Key')
 
@@ -38,44 +37,40 @@ def authorize(key: str = Depends(api_key)):
             detail='Invalid token')
 
 @app.post('/sendOrder', dependencies=[Depends(authorize)])
-async def send_order(name: str = Form(...),
-                     cocktail: str = Form(...),
-                     severity: str = Form(...),
-                     quantity: int = Form(...),
-                     spec_Instruct: str = Form(None),
-                     hole_Num: str = Form(...)):
+async def send_order(order: Order):
 
-    #USe SNOW API to screate snow incident: Done
+    drink_map = {
+        'Drink 1': 'u_drink_1',
+        'Drink 2': 'u_drink_2',
+        'Drink 3': 'u_drink_3',
+        'Drink 4': 'u_drink_4',
+        'Drink 5': 'u_drink_5',
+        'Drink 6': 'u_drink_6',
+        'Drink 7': 'u_drink_7',
+        'Drink 8': 'u_drink_8',
+        'Soda 1': 'u_soda_1',
+        'Soda 2': 'u_soda_2',
+        'Water': 'u_water'
+    }
+    #Ue SNOW API to screate snow incident: Done
 
-    inc = {'u_drink_requester':f'{name}',
-        'u_drink':f'{cocktail}',
-        'location':f'{LOCATION_MAP[hole_Num]}',
-        'u_quantity':f'{quantity}',
-        'urgency':f'{severity}',
-        'description' : f'{spec_Instruct}',
-        'short_description':f'{name} ordered {quantity} {cocktail}(s) at {LOCATION_MAP[hole_Num]}'}
+    inc = {'u_drink_requester':f"{order.name}",
+        'location':f"{order.hole_Num}",
+        'urgency':f"{order.urgency}",
+        'u_special_instructions' : f"{order.spec_Instruct}"}
+    
+    description = f"{order.name} ordered "
+    for drink, quant in order.drinks.items():
+        drinksnowname = drink_map[drink]
+        inc[drinksnowname] = quant
+        if quant != 0:
+            description = description + f"{drink} qty: {quant} "
+    inc['short_description'] = description + f"at {order.hole_Num} "
 
+    
     incident_resource = snow_client.resource('/table/incident')
     result = incident_resource.create(payload=inc)
     #Return status ie order failed/created
-    #Use OpsGenie API to create OPsGenie alert
-#     opsgeninst = opsgen.OpsInstance(config.get('creds', 'opsgentoken'))
-#     OpsGenPayload = {
-#     'message':f"{inc['short_description']}",
-#     #'alias':'python_sample',
-#     'description':'Cocktail Order from C3PSnow',
-#     'responders':[{
-#         'name': 'Sandbox-Developer01',
-#         'type': 'team'
-#       }],
-#     #'actions':['Restart', 'AnExampleAction'],
-#     'tags':['development', LOCATION_MAP[hole_Num]],
-#     'details':{'SnowINC': result['sys_id']},
-#     #'entity':'An example entity',
-#     'priority':'P5'
-#   }
-#     repl = opsgeninst.createAlert(OpsGenPayload)
-#     print(repl)
 
 def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
     '''Return new payload ranked based on key_name. Same values result
