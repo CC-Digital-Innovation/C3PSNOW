@@ -5,7 +5,7 @@ resources:
   icon: github
   source:
     uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
-    branch: feat-environ-keys
+    branch: main
     username: ((git.username))
     password: ((git.password))
     ignore_paths:
