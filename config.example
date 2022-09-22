@@ -1,7 +1,0 @@
-[creds]
-token = authentication token
-
-[snow]
-instance = snow instance
-user = snow username
-pass = snow password
