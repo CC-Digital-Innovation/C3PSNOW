@@ -5,7 +5,7 @@ resources:
   icon: github
   source:
     uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
-    branch: main
+    branch: feat-auto-tag
     username: ((git.username))
     password: ((git.password))
     ignore_paths:
@@ -13,6 +13,7 @@ resources:
     - pipeline.yaml
     - kubernetes
     - .gitignore
+    - version
 # resource of where to push image
 - name: c3psnow-image
   type: registry-image
@@ -21,6 +22,17 @@ resources:
     repository: ((gitlab.repository))/c3psnow/c3psnow
     username: ((gitlab.username))
     password: ((gitlab.password))
+    variant: dev
+# resoruce to bump version
+- name: version
+  type: semver
+  source:
+    driver: git
+    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+    branch: main
+    username: ((git.username))
+    password: ((git.password))
+    file: version
 
 jobs:
 - name: build-and-push
@@ -43,8 +55,19 @@ jobs:
         CONTEXT: c3psnow
       run:
         path: build
+  - put: version
+    params:
+      bump: patch
+  - load_var: version_num
+    file: version/version
   - put: c3psnow-image
     params:
       image: image/image.tar
-      version: '0.1'
+      version: ((.:version_num))
       bump_aliases: true
+  - put: c3psnow
+    params:
+      repository: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+      only_tag: true
+      tag: version
+      tag_prefix: v
