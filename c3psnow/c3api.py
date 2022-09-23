@@ -55,6 +55,7 @@ async def send_order(order: Order):
     #Ue SNOW API to screate snow incident: Done
 
     inc = {'u_drink_requester':f"{order.name}",
+        'category' : 'drink',
         'location':f"{order.hole_Num}",
         'urgency':f"{order.urgency}",
         'u_special_instructions' : f"{order.spec_Instruct}"}
