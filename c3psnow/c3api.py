@@ -27,6 +27,7 @@ class Order(BaseModel):
     urgency: int
     spec_Instruct: str = None
     hole_Num: str
+    cart_Num: int = None
 
 api_key = APIKeyHeader(name='X-API-Key')
 
@@ -52,9 +53,10 @@ async def send_order(order: Order):
         'Soda 2': 'u_soda_2',
         'Water': 'u_water'
     }
-    #Ue SNOW API to screate snow incident: Done
-
+    
+    #Set up service now payload from recieved order information
     inc = {'u_drink_requester':f"{order.name}",
+        'u_cart_number': f"{order.cart_Num}",
         'category' : 'drink',
         'location':f"{order.hole_Num}",
         'urgency':f"{order.urgency}",
@@ -68,7 +70,7 @@ async def send_order(order: Order):
             description = description + f"{drink} qty: {quant} "
     inc['short_description'] = description + f"at {order.hole_Num} "
 
-    
+    #Use pysnow to screate snow incident
     incident_resource = snow_client.resource('/table/incident')
     result = incident_resource.create(payload=inc)
     #Return status ie order failed/created
