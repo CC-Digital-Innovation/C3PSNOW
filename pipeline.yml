@@ -29,7 +29,7 @@ resources:
   source:
     driver: git
     uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
-    branch: main
+    branch: feat-auto-tag
     username: ((git.username))
     password: ((git.password))
     file: version
