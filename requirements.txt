@@ -6,3 +6,4 @@ pysnow
 opsgenie-sdk
 python-dotenv
 python-multipart
+pydantic
