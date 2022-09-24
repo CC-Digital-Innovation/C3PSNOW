@@ -51,6 +51,7 @@ jobs:
       - name: c3psnow
       outputs:
       - name: image
+      - name: c3psnow
       params:
         CONTEXT: c3psnow
       run:
@@ -67,7 +68,7 @@ jobs:
       bump_aliases: true
   - put: c3psnow
     params:
-      repository: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+      repository: c3psnow
       only_tag: true
-      tag: version
+      tag: c3psnow/version
       tag_prefix: v
