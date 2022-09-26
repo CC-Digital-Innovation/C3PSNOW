@@ -29,7 +29,7 @@ spec:
         app: c3psnow
     spec:
       containers:
-      - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow
+      - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.1
         name: c3psnow
         args:
           [ '/bin/bash', '-c', 'source /vault/secrets/* && python main.py' ]
