@@ -19,7 +19,7 @@ SNOW_PASS = os.getenv('SNOW_PASS')
 
 snow_client = pysnow.Client(SNOW_INST, user=SNOW_USER, password=SNOW_PASS)
 
-app = FastAPI()
+app = FastAPI(root_path='/c3psnow')
 
 class Order(BaseModel):
     name: str
