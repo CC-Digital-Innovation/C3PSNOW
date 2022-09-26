@@ -15,15 +15,15 @@ spec:
         vault.hashicorp.com/role: 'c3psnow'
         vault.hashicorp.com/agent-inject-secret-api: 'concourse/main/c3psnow/api'
         vault.hashicorp.com/agent-inject-template-api: |
-          {{ with secret "concourse/main/c3psnow/api" -}}
-            export API_KEY="{{ .Data.token }}"
+          {{- with secret "concourse/main/c3psnow/api" -}}
+            export API_KEY="{{ .Data.data.token }}"
           {{- end }}
         vault.hashicorp.com/agent-inject-secret-snow: 'concourse/main/c3psnow/snow'
-        vault.hashicorp.com/agent-inject-template-api: |
-          {{ with secret "concourse/main/c3psnow/snow" -}}
-            export SNOW_INST="{{ .Data.instance }}"
-            export SNOW_USER="{{ .Data.username }}"
-            export SNOW_PASS="{{ .Data.password }}"
+        vault.hashicorp.com/agent-inject-template-snow: |
+          {{- with secret "concourse/main/c3psnow/snow" -}}
+            export SNOW_INST="{{ .Data.data.instance }}"
+            export SNOW_USER="{{ .Data.data.username }}"
+            export SNOW_PASS="{{ .Data.data.password }}"
           {{- end }}
       labels:
         app: c3psnow
@@ -32,7 +32,7 @@ spec:
       - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.1
         name: c3psnow
         args:
-          [ '/bin/bash', '-c', 'source /vault/secrets/* && python main.py' ]
+          [ '/bin/bash', '-c', 'source /vault/secrets/api && source /vault/secrets/snow && python main.py' ]
         ports:
         - containerPort: 8000
       imagePullSecrets:
