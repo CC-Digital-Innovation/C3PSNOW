@@ -24,7 +24,9 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 LOCATION_MAP = dict(config.items('location'))
-
+print(SNOW_INST)
+print(SNOW_PASS)
+print(SNOW_USER)
 snow_client = pysnow.Client(SNOW_INST, user=SNOW_USER, password=SNOW_PASS)
 
 app = FastAPI()
