@@ -62,7 +62,7 @@ jobs:
   - put: c3psnow-image
     params:
       image: image/image.tar
-      version: '0.1.1'
+      version: '0.1.2'
   - put: notifier
     params:
       alert_type: success
