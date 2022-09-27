@@ -1,16 +1,17 @@
 import os
 import secrets
 from copy import deepcopy
+from enum import Enum
+from pathlib import PurePath
 
 import dotenv
 import pysnow
 from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.params import Form
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
 # load secrets from .env
-dotenv.load_dotenv()
+dotenv.load_dotenv(PurePath(__file__).with_name('.env'))
 
 API_KEY = os.getenv('API_KEY')
 SNOW_INST = os.getenv('SNOW_INST')
@@ -149,3 +150,32 @@ async def get_top_holes():
         'total': int(requestor['stats']['count'])
     } for requestor in response]
     return _add_rank(payload, 'total')
+
+class State(Enum):
+    NEW = 1
+    ASSIGNED = 3
+    PROCESS = 2
+    DELIVER = 4
+    CLOSED = 7
+    CANCELED = 8
+
+fields = ['sys_created_on', 'u_drink_requester', 'severity', 'state', 
+          'u_drink_1', 'u_drink_2', 'u_drink_3', 'u_drink_4', 'u_drink_5', 
+          'u_drink_6', 'u_drink_7', 'u_drink_8', 'u_soda_1', 'u_soda_2', 
+          'u_water']
+
+@app.get('/queue', dependencies=[Depends(authorize)])
+async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
+    incident_resource = snow_client.resource('/table/incident')
+    params = {
+        'sysparm_display_value': True,
+        'sysparm_limit': limit,
+        'sysparm_offset': offset,
+        'sysparm_fields': ','.join(fields)
+    }
+    incident_resource.parameters.add_custom(params)
+    if state:
+        query = pysnow.QueryBuilder().field('state').equals(str(state.value))
+        return incident_resource.get(query).all()
+    return incident_resource.get().all()
+    

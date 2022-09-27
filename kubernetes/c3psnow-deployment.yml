@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: c3psnow
+  name: c3psnow-dev
 spec:
   replicas: 1
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: c3psnow
+      app: c3psnow-dev
   template:
     metadata:
       annotations:
@@ -26,11 +26,11 @@ spec:
             export SNOW_PASS="{{ .Data.data.password }}"
           {{- end }}
       labels:
-        app: c3psnow
+        app: c3psnow-dev
     spec:
       containers:
-      - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.1
-        name: c3psnow
+      - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.1-dev
+        name: c3psnow-dev
         args:
           [ '/bin/bash', '-c', 'source /vault/secrets/api && source /vault/secrets/snow && python main.py' ]
         ports:
