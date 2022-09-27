@@ -191,4 +191,6 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
             + int(order['u_drink_3']) + int(order['u_drink_4']) + int(order['u_drink_5']) 
             + int(order['u_drink_6']) + int(order['u_drink_7']) + int(order['u_drink_8']) 
             + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
+        # trim number
+        order['urgency'] = order['urgency'][4:]
     return orders
