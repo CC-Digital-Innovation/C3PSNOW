@@ -159,12 +159,12 @@ async def get_top_holes():
     return _add_rank(payload, 'total')
 
 class State(Enum):
-    NEW = 1
-    ASSIGNED = 3
-    PROCESS = 2
-    DELIVER = 4
-    CLOSED = 7
-    CANCELED = 8
+    NEW = 'New'
+    ASSIGNED = 'Drink Delivery Assigned'
+    PROCESS = 'Drink Being Made'
+    DELIVER = 'Drink Being Delivered'
+    CLOSED = 'Closed'
+    CANCELED = 'Canceled'
 
 fields = ['sys_created_on', 'u_drink_requester', 'severity', 'state', 
           'u_drink_1', 'u_drink_2', 'u_drink_3', 'u_drink_4', 'u_drink_5', 
