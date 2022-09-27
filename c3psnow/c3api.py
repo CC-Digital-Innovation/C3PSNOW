@@ -180,9 +180,9 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
         'sysparm_offset': offset,
         'sysparm_fields': ','.join(fields)
     }
-    incident_resource.parameters.add_custom(params)
+    # inconsistent results with pysnow, resorting to direct params
     if state:
-        query = pysnow.QueryBuilder().field('state').equals(str(state.value))
-        return incident_resource.get(query).all()
+        params['state'] = state.value
+    incident_resource.parameters.add_custom(params)
     return incident_resource.get().all()
     
