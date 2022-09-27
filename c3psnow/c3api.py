@@ -7,6 +7,7 @@ from pathlib import PurePath
 import dotenv
 import pysnow
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
@@ -20,7 +21,13 @@ SNOW_PASS = os.getenv('SNOW_PASS')
 
 snow_client = pysnow.Client(SNOW_INST, user=SNOW_USER, password=SNOW_PASS)
 
-app = FastAPI(root_path='/c3psnow')
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_methods=['*'],
+    allow_headers=['*']
+)
 
 class Order(BaseModel):
     name: str
