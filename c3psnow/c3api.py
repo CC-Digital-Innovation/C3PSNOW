@@ -166,7 +166,7 @@ class State(Enum):
     CLOSED = 'Closed'
     CANCELED = 'Canceled'
 
-fields = ['sys_created_on', 'u_drink_requester', 'severity', 'state', 
+fields = ['sys_created_on', 'u_drink_requester', 'urgency', 'state', 
           'u_drink_1', 'u_drink_2', 'u_drink_3', 'u_drink_4', 'u_drink_5', 
           'u_drink_6', 'u_drink_7', 'u_drink_8', 'u_soda_1', 'u_soda_2', 
           'u_water']
@@ -178,7 +178,8 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
         'sysparm_display_value': True,
         'sysparm_limit': limit,
         'sysparm_offset': offset,
-        'sysparm_fields': ','.join(fields)
+        'sysparm_fields': ','.join(fields),
+        'sysparm_query': 'u_drink_requesterISNOTEMPTY^ORDERBYurgency^ORDERBYsys_created_on'
     }
     # inconsistent results with pysnow, resorting to direct params
     if state:
