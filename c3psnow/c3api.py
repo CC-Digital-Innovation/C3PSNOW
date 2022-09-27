@@ -184,5 +184,10 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
     if state:
         params['state'] = state.value
     incident_resource.parameters.add_custom(params)
-    return incident_resource.get().all()
-    
+    orders = incident_resource.get().all()
+    for order in orders:
+        order['total_drinks'] = (int(order['u_drink_1']) + int(order['u_drink_2']) 
+            + int(order['u_drink_3']) + int(order['u_drink_4']) + int(order['u_drink_5']) 
+            + int(order['u_drink_6']) + int(order['u_drink_7']) + int(order['u_drink_8']) 
+            + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
+    return orders
