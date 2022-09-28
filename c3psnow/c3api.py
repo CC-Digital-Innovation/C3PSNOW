@@ -117,10 +117,15 @@ async def get_top_requestors():
     aggregate_inc_resrc.parameters.add_custom(params)
     query = pysnow.QueryBuilder().field('u_drink_requester').is_not_empty()
     response = aggregate_inc_resrc.get(query).all()
-    payload = [{
-        'name': requestor['groupby_fields'][0]['value'],
-        'total': sum([int(n) for n in requestor['stats']['sum'].values() if n != '0'])
-    } for requestor in response]
+    payload = []
+    for requestor in response:
+        total = sum([int(n) for n in requestor['stats']['sum'].values()])
+        if total <= 0:
+            continue
+        payload.append({
+            'name': requestor['groupby_fields'][0]['value'],
+            'total': total
+        })
     return _add_rank(payload, 'total')
 
 @app.get('/rank/drinks', dependencies=[Depends(authorize)])
