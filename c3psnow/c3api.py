@@ -119,7 +119,7 @@ async def get_top_requestors():
     response = aggregate_inc_resrc.get(query).all()
     payload = [{
         'name': requestor['groupby_fields'][0]['value'],
-        'total': sum([int(n) for n in requestor['stats']['sum'].values()])
+        'total': sum([int(n) for n in requestor['stats']['sum'].values() if n != '0'])
     } for requestor in response]
     return _add_rank(payload, 'total')
 
