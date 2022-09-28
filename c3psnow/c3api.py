@@ -169,7 +169,7 @@ class State(Enum):
 fields = ['sys_created_on', 'u_drink_requester', 'urgency', 'state', 
           'u_drink_1', 'u_drink_2', 'u_drink_3', 'u_drink_4', 'u_drink_5', 
           'u_drink_6', 'u_drink_7', 'u_drink_8', 'u_soda_1', 'u_soda_2', 
-          'u_water']
+          'u_water', 'assigned_to']
 
 @app.get('/queue', dependencies=[Depends(authorize)])
 async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
@@ -191,6 +191,4 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
             + int(order['u_drink_3']) + int(order['u_drink_4']) + int(order['u_drink_5']) 
             + int(order['u_drink_6']) + int(order['u_drink_7']) + int(order['u_drink_8']) 
             + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
-        # trim number
-        order['urgency'] = order['urgency'][4:]
     return orders
