@@ -137,7 +137,7 @@ async def get_top_drinks():
     }
     aggregate_inc_resrc.parameters.add_custom(params)
     response = aggregate_inc_resrc.get().all()
-    payload = [{'name': k, 'total': int(v)} for k, v in response['stats']['sum']]
+    payload = [{'name': k, 'total': int(v)} for k, v in response['stats']['sum'].items()]
     return _add_rank(payload, 'total')
 
 @app.get('/rank/holes', dependencies=[Depends(authorize)])
