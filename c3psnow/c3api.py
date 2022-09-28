@@ -3,6 +3,7 @@ import secrets
 from copy import deepcopy
 from enum import Enum
 from pathlib import PurePath
+from operator import itemgetter
 
 import dotenv
 import pysnow
@@ -45,10 +46,7 @@ def authorize(key: str = Depends(api_key)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Invalid token')
 
-@app.post('/sendOrder', dependencies=[Depends(authorize)])
-async def send_order(order: Order):
-
-    drink_map = {
+drink_map = {
         'Drink 1': 'u_drink_1',
         'Drink 2': 'u_drink_2',
         'Drink 3': 'u_drink_3',
@@ -61,6 +59,9 @@ async def send_order(order: Order):
         'Soda 2': 'u_soda_2',
         'Water': 'u_water'
     }
+
+@app.post('/sendOrder', dependencies=[Depends(authorize)])
+async def send_order(order: Order):
     
     #Set up service now payload from recieved order information
     inc = {'u_drink_requester':f"{order.name}",
@@ -85,8 +86,7 @@ async def send_order(order: Order):
 
 def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
     '''Return new payload ranked based on key_name. Same values result
-    in the same rank. This assumes the payload is already reverse sorted
-    (descending order).
+    in the same rank.
 
     Args:
         payload (list[dict]): payload to be ranked
@@ -95,10 +95,11 @@ def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
     Returns:
         list[dict]: new payload with rank key-value
     '''
+    sorted_payload = sorted(payload.items(), key=itemgetter('total'), reverse=True)
     ranked_payload = []
     curr_max = 0
     curr_rank = 1
-    for p in payload:
+    for p in sorted_payload:
         curr = deepcopy(p)
         curr_rank = curr['rank'] = curr_rank+1 if curr[key_name] < curr_max else curr_rank
         curr_max = curr[key_name]
@@ -109,16 +110,16 @@ def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
 async def get_top_requestors():
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
-        'sysparm_count': True,
         'sysparm_group_by': 'u_drink_requester',
-        'sysparm_order_by': 'COUNT^DESC'
+        'sysparm_display_value': True,
+        'sysparm_sum_fields': ','.join(drink_map.values())
     }
     aggregate_inc_resrc.parameters.add_custom(params)
-    query = pysnow.QueryBuilder().field('u_drink').is_not_empty()
+    query = pysnow.QueryBuilder().field('u_drink_requester').is_not_empty()
     response = aggregate_inc_resrc.get(query).all()
     payload = [{
         'name': requestor['groupby_fields'][0]['value'],
-        'total': int(requestor['stats']['count'])
+        'total': sum([int(n) for n in requestor['stats']['sum'].values()])
     } for requestor in response]
     return _add_rank(payload, 'total')
 
@@ -126,36 +127,29 @@ async def get_top_requestors():
 async def get_top_drinks():
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
-        'sysparm_count': True,
-        'sysparm_group_by': 'u_drink',
-        'sysparm_order_by': 'COUNT^DESC',
-        'sysparm_display_value': True
+        'sysparm_display_value': True,
+        'sysparm_sum_fields': ','.join(drink_map.values())
     }
     aggregate_inc_resrc.parameters.add_custom(params)
-    query = pysnow.QueryBuilder().field('u_drink').is_not_empty()
-    response = aggregate_inc_resrc.get(query).all()
-    payload = [{
-        'name': requestor['groupby_fields'][0]['value'],
-        'total': int(requestor['stats']['count'])
-    } for requestor in response]
+    response = aggregate_inc_resrc.get().all()
+    payload = [{'name': k, 'total': int(v)} for k, v in response['stats']['sum']]
     return _add_rank(payload, 'total')
 
 @app.get('/rank/holes', dependencies=[Depends(authorize)])
 async def get_top_holes():
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
-        'sysparm_count': True,
         'sysparm_group_by': 'location',
-        'sysparm_order_by': 'COUNT^DESC',
+        'sysparm_sum_fields': ','.join(drink_map.values()),
         'sysparm_display_value': True
     }
     aggregate_inc_resrc.parameters.add_custom(params)
     query = pysnow.QueryBuilder().field('location').starts_with('Hole')
     response = aggregate_inc_resrc.get(query).all()
     payload = [{
-        'name': requestor['groupby_fields'][0]['value'],
-        'total': int(requestor['stats']['count'])
-    } for requestor in response]
+        'name': location['groupby_fields'][0]['value'],
+        'total': sum([int(n) for n in location['stats']['sum'].values()])
+    } for location in response]
     return _add_rank(payload, 'total')
 
 class State(Enum):
