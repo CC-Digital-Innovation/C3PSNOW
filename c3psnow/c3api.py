@@ -95,7 +95,7 @@ def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
     Returns:
         list[dict]: new payload with rank key-value
     '''
-    sorted_payload = sorted(payload.items(), key=itemgetter('total'), reverse=True)
+    sorted_payload = sorted(payload, key=itemgetter('total'), reverse=True)
     ranked_payload = []
     curr_max = 0
     curr_rank = 1
