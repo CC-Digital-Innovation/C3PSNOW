@@ -5,7 +5,7 @@ resources:
   icon: github
   source:
     uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
-    branch: main
+    branch: feat-queue
     username: ((git.username))
     password: ((git.password))
     ignore_paths:
@@ -21,10 +21,26 @@ resources:
     repository: ((gitlab.repository))/c3psnow/c3psnow
     username: ((gitlab.username))
     password: ((gitlab.password))
+    variant: dev
+# resource to send to slack
+- name: notifier
+  type: slack-notifier
+  source:
+    url: ((slack.webhook))
+
+# add slack resource
+resource_types:
+- name: slack-notifier
+  type: docker-image
+  source:
+    repository: mockersf/concourse-slack-notifier
 
 jobs:
 - name: build-and-push
   plan:
+  - put: notifier
+    params:
+      alert_type: started
   - get: c3psnow
     trigger: true
   - task: build-task-image
@@ -46,5 +62,11 @@ jobs:
   - put: c3psnow-image
     params:
       image: image/image.tar
-      version: '0.1'
-      bump_aliases: true
+      version: '0.1.2'
+  - put: notifier
+    params:
+      alert_type: success
+  on_failure:
+    put: notifier
+    params:
+      alert_type: failed
