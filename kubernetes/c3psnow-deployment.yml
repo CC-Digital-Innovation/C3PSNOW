@@ -25,6 +25,11 @@ spec:
             export SNOW_USER="{{ .Data.data.username }}"
             export SNOW_PASS="{{ .Data.data.password }}"
           {{- end }}
+        vault.hashicorp.com/agent-inject-secret-noco: 'concourse/main/c3psnow/noco'
+        vault.hashicorp.com/agent-inject-template-noco: |
+          {{- with secret "concourse/main/c3psnow/noco" -}}
+            export NOCO_KEY="{{ .Data.data.api_key }}"
+          {{- end }}
       labels:
         app: c3psnow
     spec:
@@ -32,7 +37,7 @@ spec:
       - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.1
         name: c3psnow
         args:
-          [ '/bin/bash', '-c', 'source /vault/secrets/api && source /vault/secrets/snow && python main.py' ]
+          [ '/bin/bash', '-c', 'source /vault/secrets/api && source /vault/secrets/snow && source /vault/secrets/noco && python main.py' ]
         ports:
         - containerPort: 8000
       imagePullSecrets:

@@ -1,11 +1,12 @@
+from email import header
 import os
 import secrets
 from copy import deepcopy
-
+from wsgiref import headers
+import requests
 import dotenv
 import pysnow
 from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.params import Form
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
@@ -16,10 +17,16 @@ API_KEY = os.getenv('API_KEY')
 SNOW_INST = os.getenv('SNOW_INST')
 SNOW_USER = os.getenv('SNOW_USER')
 SNOW_PASS = os.getenv('SNOW_PASS')
+NOCO_KEY = os.getenv('NOCO_KEY')
+NOCOHEAD  = {
+        'xc-auth': NOCO_KEY,
+        'Content-Type': 'application/json'
+    }
+NOCOBASEURL = 'http://66.70.190.121:8080/nc/c_3psnow_member_list_gl32/api/v1/c3psnowGuestList'
 
 snow_client = pysnow.Client(SNOW_INST, user=SNOW_USER, password=SNOW_PASS)
 
-app = FastAPI(root_path='/c3psnow')
+app = FastAPI()
 
 class Order(BaseModel):
     name: str
@@ -27,7 +34,7 @@ class Order(BaseModel):
     urgency: int
     spec_Instruct: str = None
     hole_Num: str
-    cart_Num: int = None
+    #cart_Num: int = None
 
 api_key = APIKeyHeader(name='X-API-Key')
 
@@ -56,7 +63,7 @@ async def send_order(order: Order):
     
     #Set up service now payload from recieved order information
     inc = {'u_drink_requester':f"{order.name}",
-        'u_cart_number': f"{order.cart_Num}",
+        #'u_cart_number': f"{order.cart_Num}",
         'category' : 'drink',
         'location':f"{order.hole_Num}",
         'urgency':f"{order.urgency}",
@@ -70,6 +77,18 @@ async def send_order(order: Order):
             description = description + f"{drink} qty: {quant} "
     inc['short_description'] = description + f"at {order.hole_Num} "
 
+    nocorul = f"{NOCOBASEURL}/findOne"
+
+    query = {
+        'where' : f"(Name,eq,{order.name})"
+    }
+
+    response = requests.get(nocorul, headers= NOCOHEAD, params = query)
+    phone= f"+1{response.json()['PhoneNumber']}"
+
+    inc['u_phone_number']=phone
+    inc['u_cart_number']=response.json()['CartID']
+    print(response.json())
     #Use pysnow to screate snow incident
     incident_resource = snow_client.resource('/table/incident')
     result = incident_resource.create(payload=inc)
@@ -149,3 +168,20 @@ async def get_top_holes():
         'total': int(requestor['stats']['count'])
     } for requestor in response]
     return _add_rank(payload, 'total')
+
+@app.get('/noco/getNames', dependencies=[Depends(authorize)])
+async def get_names():
+
+    url = f"{NOCOBASEURL}/groupby"
+
+    query = {
+        'column_name' : 'Name'
+    }
+
+
+    res = requests.get(url, headers=NOCOHEAD, params=query)
+    names = []
+    for record in res.json():
+        names.append(record['Name'])
+
+    return names
