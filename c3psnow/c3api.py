@@ -69,7 +69,7 @@ drink_map = {
 
 @app.post('/sendOrder', dependencies=[Depends(authorize)])
 async def send_order(order: Order):
-    
+    incident_resource = snow_client.resource('/table/incident')
     #Set up service now payload from recieved order information
     inc = {'u_drink_requester':f"{order.name}",
         #'u_cart_number': f"{order.cart_Num}",
@@ -93,15 +93,20 @@ async def send_order(order: Order):
     }
 
     response = requests.get(nocorul, headers= NOCOHEAD, params = query)
-    phone= f"+1{response.json()['PhoneNumber']}"
+    if response.content:
+        phone= f"+1{response.json()['PhoneNumber']}"
 
-    inc['u_phone_number']=phone
-    inc['u_cart_number']=response.json()['CartID']
-    print(response.json())
-    #Use pysnow to screate snow incident
-    incident_resource = snow_client.resource('/table/incident')
-    result = incident_resource.create(payload=inc)
-    #Return status ie order failed/created
+        inc['u_phone_number']=phone
+        inc['u_cart_number']=response.json()['CartID']    #Use pysnow to screate snow incident
+
+    try:
+        result = incident_resource.create(payload=inc)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail='Order failed to submit to service now')
+    
+    return ("Order Successfully Submitted")
 
 def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
     '''Return new payload ranked based on key_name. Same values result
