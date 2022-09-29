@@ -21,11 +21,11 @@ SNOW_INST = os.getenv('SNOW_INST')
 SNOW_USER = os.getenv('SNOW_USER')
 SNOW_PASS = os.getenv('SNOW_PASS')
 NOCO_KEY = os.getenv('NOCO_KEY')
+NOCOBASEURL = os.getenv('NOCO_URL')
 NOCOHEAD  = {
         'xc-auth': NOCO_KEY,
         'Content-Type': 'application/json'
     }
-NOCOBASEURL = 'http://66.70.190.121:8080/nc/c_3psnow_member_list_gl32/api/v1/c3psnowGuestList'
 
 snow_client = pysnow.Client(SNOW_INST, user=SNOW_USER, password=SNOW_PASS)
 
