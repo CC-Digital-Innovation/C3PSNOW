@@ -2,11 +2,12 @@ import os
 import secrets
 from copy import deepcopy
 from enum import Enum
-from pathlib import PurePath
 from operator import itemgetter
+from pathlib import PurePath
 
 import dotenv
 import pysnow
+import requests
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
@@ -19,6 +20,12 @@ API_KEY = os.getenv('API_KEY')
 SNOW_INST = os.getenv('SNOW_INST')
 SNOW_USER = os.getenv('SNOW_USER')
 SNOW_PASS = os.getenv('SNOW_PASS')
+NOCO_KEY = os.getenv('NOCO_KEY')
+NOCOHEAD  = {
+        'xc-auth': NOCO_KEY,
+        'Content-Type': 'application/json'
+    }
+NOCOBASEURL = 'http://66.70.190.121:8080/nc/c_3psnow_member_list_gl32/api/v1/c3psnowGuestList'
 
 snow_client = pysnow.Client(SNOW_INST, user=SNOW_USER, password=SNOW_PASS)
 
@@ -36,7 +43,7 @@ class Order(BaseModel):
     urgency: int
     spec_Instruct: str = None
     hole_Num: str
-    cart_Num: int = None
+    #cart_Num: int = None
 
 api_key = APIKeyHeader(name='X-API-Key')
 
@@ -47,25 +54,25 @@ def authorize(key: str = Depends(api_key)):
             detail='Invalid token')
 
 drink_map = {
-        'Drink 1': 'u_drink_1',
-        'Drink 2': 'u_drink_2',
-        'Drink 3': 'u_drink_3',
-        'Drink 4': 'u_drink_4',
-        'Drink 5': 'u_drink_5',
-        'Drink 6': 'u_drink_6',
-        'Drink 7': 'u_drink_7',
-        'Drink 8': 'u_drink_8',
-        'Soda 1': 'u_soda_1',
-        'Soda 2': 'u_soda_2',
-        'Water': 'u_water'
-    }
+    'Drink 1': 'u_drink_1',
+    'Drink 2': 'u_drink_2',
+    'Drink 3': 'u_drink_3',
+    'Drink 4': 'u_drink_4',
+    'Drink 5': 'u_drink_5',
+    'Drink 6': 'u_drink_6',
+    'Drink 7': 'u_drink_7',
+    'Drink 8': 'u_drink_8',
+    'Soda 1': 'u_soda_1',
+    'Soda 2': 'u_soda_2',
+    'Water': 'u_water'
+}
 
 @app.post('/sendOrder', dependencies=[Depends(authorize)])
 async def send_order(order: Order):
     
     #Set up service now payload from recieved order information
     inc = {'u_drink_requester':f"{order.name}",
-        'u_cart_number': f"{order.cart_Num}",
+        #'u_cart_number': f"{order.cart_Num}",
         'category' : 'drink',
         'location':f"{order.hole_Num}",
         'urgency':f"{order.urgency}",
@@ -79,6 +86,18 @@ async def send_order(order: Order):
             description = description + f"{drink} qty: {quant} "
     inc['short_description'] = description + f"at {order.hole_Num} "
 
+    nocorul = f"{NOCOBASEURL}/findOne"
+
+    query = {
+        'where' : f"(Name,eq,{order.name})"
+    }
+
+    response = requests.get(nocorul, headers= NOCOHEAD, params = query)
+    phone= f"+1{response.json()['PhoneNumber']}"
+
+    inc['u_phone_number']=phone
+    inc['u_cart_number']=response.json()['CartID']
+    print(response.json())
     #Use pysnow to screate snow incident
     incident_resource = snow_client.resource('/table/incident')
     result = incident_resource.create(payload=inc)
@@ -137,7 +156,12 @@ async def get_top_drinks():
     }
     aggregate_inc_resrc.parameters.add_custom(params)
     response = aggregate_inc_resrc.get().all()
-    payload = [{'name': k, 'total': int(v)} for k, v in response[0]['stats']['sum'].items()]
+    payload = []
+    for drink_key, total in response[0]['stats']['sum'].items():
+        payload.append({
+            'name': next((k for k, v in drink_map.items() if v == drink_key)),
+            'total': int(total)
+        })
     return _add_rank(payload, 'total')
 
 @app.get('/rank/holes', dependencies=[Depends(authorize)])
@@ -191,3 +215,20 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
             + int(order['u_drink_6']) + int(order['u_drink_7']) + int(order['u_drink_8']) 
             + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
     return orders
+
+@app.get('/noco/getNames', dependencies=[Depends(authorize)])
+async def get_names():
+
+    url = f"{NOCOBASEURL}/groupby"
+
+    query = {
+        'column_name' : 'Name'
+    }
+
+
+    res = requests.get(url, headers=NOCOHEAD, params=query)
+    names = []
+    for record in res.json():
+        names.append(record['Name'])
+
+    return names
