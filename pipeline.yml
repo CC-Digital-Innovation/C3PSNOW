@@ -5,7 +5,7 @@ resources:
   icon: github
   source:
     uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
-    branch: feat-queue
+    branch: main
     username: ((git.username))
     password: ((git.password))
     ignore_paths:
@@ -21,7 +21,6 @@ resources:
     repository: ((gitlab.repository))/c3psnow/c3psnow
     username: ((gitlab.username))
     password: ((gitlab.password))
-    variant: dev
 # resource to send to slack
 - name: notifier
   type: slack-notifier
@@ -62,7 +61,8 @@ jobs:
   - put: c3psnow-image
     params:
       image: image/image.tar
-      version: '0.1.2'
+      version: '0.1.1'
+      bump_aliases: true
   - put: notifier
     params:
       alert_type: success
