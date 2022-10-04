@@ -4,7 +4,7 @@ from copy import deepcopy
 from enum import Enum
 from operator import itemgetter
 from pathlib import PurePath
-
+from datetime import date
 import dotenv
 import pysnow
 import requests
@@ -132,6 +132,7 @@ def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
 
 @app.get('/rank/requestors', dependencies=[Depends(authorize)])
 async def get_top_requestors():
+    today = date.today().strftime("%Y-%m-%d")
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
         'sysparm_group_by': 'u_drink_requester',
@@ -139,7 +140,7 @@ async def get_top_requestors():
         'sysparm_sum_fields': ','.join(drink_map.values())
     }
     aggregate_inc_resrc.parameters.add_custom(params)
-    query = pysnow.QueryBuilder().field('u_drink_requester').is_not_empty()
+    query = pysnow.QueryBuilder().field('u_drink_requester').is_not_empty().AND().field('opened_at').contains(today)
     response = aggregate_inc_resrc.get(query).all()
     payload = []
     for requestor in response:
@@ -154,13 +155,15 @@ async def get_top_requestors():
 
 @app.get('/rank/drinks', dependencies=[Depends(authorize)])
 async def get_top_drinks():
+    today = date.today().strftime("%Y-%m-%d")
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
         'sysparm_display_value': True,
         'sysparm_sum_fields': ','.join(drink_map.values())
     }
     aggregate_inc_resrc.parameters.add_custom(params)
-    response = aggregate_inc_resrc.get().all()
+    query = pysnow.QueryBuilder().field('opened_at').contains(today)
+    response = aggregate_inc_resrc.get(query).all()
     payload = []
     for drink_key, total in response[0]['stats']['sum'].items():
         payload.append({
@@ -171,6 +174,7 @@ async def get_top_drinks():
 
 @app.get('/rank/holes', dependencies=[Depends(authorize)])
 async def get_top_holes():
+    today = date.today().strftime("%Y-%m-%d")
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
         'sysparm_group_by': 'location',
@@ -178,7 +182,7 @@ async def get_top_holes():
         'sysparm_display_value': True
     }
     aggregate_inc_resrc.parameters.add_custom(params)
-    query = pysnow.QueryBuilder().field('location').starts_with('Hole')
+    query = pysnow.QueryBuilder().field('location').starts_with('Hole').AND().field('opened_at').contains(today)
     response = aggregate_inc_resrc.get(query).all()
     payload = [{
         'name': location['groupby_fields'][0]['value'],
@@ -227,7 +231,8 @@ async def get_names():
     url = f"{NOCOBASEURL}/groupby"
 
     query = {
-        'column_name' : 'Name'
+        'column_name' : 'Name',
+        'limit': 1000
     }
 
 
