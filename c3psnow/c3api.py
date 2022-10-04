@@ -205,6 +205,7 @@ fields = ['sys_created_on', 'u_drink_requester', 'urgency', 'state',
 
 @app.get('/queue', dependencies=[Depends(authorize)])
 async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
+    today = date.today().strftime("%Y-%m-%d")
     incident_resource = snow_client.resource('/table/incident')
     params = {
         'sysparm_display_value': True,
@@ -218,12 +219,15 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
         params['state'] = state.value
     incident_resource.parameters.add_custom(params)
     orders = incident_resource.get().all()
+    retorder=[]
     for order in orders:
-        order['total_drinks'] = (int(order['u_drink_1']) + int(order['u_drink_2']) 
-            + int(order['u_drink_3']) + int(order['u_drink_4']) + int(order['u_drink_5']) 
-            + int(order['u_drink_6']) + int(order['u_drink_7']) + int(order['u_drink_8']) 
-            + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
-    return orders
+        if today in order['sys_created_on']:
+            order['total_drinks'] = (int(order['u_drink_1']) + int(order['u_drink_2']) 
+                + int(order['u_drink_3']) + int(order['u_drink_4']) + int(order['u_drink_5']) 
+                + int(order['u_drink_6']) + int(order['u_drink_7']) + int(order['u_drink_8']) 
+                + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
+            retorder.append(order)
+    return retorder
 
 @app.get('/noco/getNames', dependencies=[Depends(authorize)])
 async def get_names():
