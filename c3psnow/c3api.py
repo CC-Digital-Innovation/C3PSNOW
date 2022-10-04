@@ -54,16 +54,16 @@ def authorize(key: str = Depends(api_key)):
             detail='Invalid token')
 
 drink_map = {
-    'Drink 1': 'u_drink_1',
-    'Drink 2': 'u_drink_2',
-    'Drink 3': 'u_drink_3',
-    'Drink 4': 'u_drink_4',
-    'Drink 5': 'u_drink_5',
-    'Drink 6': 'u_drink_6',
-    'Drink 7': 'u_drink_7',
-    'Drink 8': 'u_drink_8',
-    'Soda 1': 'u_soda_1',
-    'Soda 2': 'u_soda_2',
+    'Transfusion': 'u_drink_1',
+    'Wild Arnold Palmer': 'u_drink_2',
+    'Bloody Mary': 'u_drink_3',
+    'Dark and Stormy': 'u_drink_4',
+    'Coors Light': 'u_drink_5',
+    'New Belgium Voodoo Ranger IPA': 'u_drink_6',
+    'Sam Adams Seasonal': 'u_drink_7',
+    'Goose Island IPA': 'u_drink_8',
+    'Unsweetended Ice Tea': 'u_soda_1',
+    'Arnold Palmer': 'u_soda_2',
     'Water': 'u_water'
 }
 
