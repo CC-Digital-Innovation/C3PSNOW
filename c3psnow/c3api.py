@@ -225,6 +225,36 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
             + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
     return orders
 
+alcoholic = ['u_drink_1', 'u_drink_2', 'u_drink_3', 'u_drink_4', 'u_drink_5', 
+          'u_drink_6', 'u_drink_7', 'u_drink_8']
+
+@app.get('/getBacStats', dependencies=[Depends(authorize)])
+async def get_bac_stats(name: str):
+    aggregate_drinks = snow_client.resource('/stats/incident')
+    # inconsistent results with pysnow, resorting to direct params
+    params = {
+        'sysparm_display_value': True,
+        'sysparm_sum_fields': ','.join(alcoholic),
+        'sysparm_group_by': 'u_drink_requester',
+        'sysparm_query': f'sys_created_on>javascript:gs.endOfYesterday()^u_drink_requester={name}'
+    }
+    aggregate_drinks.parameters.add_custom(params)
+    response = aggregate_drinks.get().all()
+    total = sum([int(n) for n in response[0]['stats']['sum'].values()])
+
+    aggregate_drinks_by_date = snow_client.resource('/stats/incident')
+    # inconsistent results with pysnow, resorting to direct params
+    params = {
+        'sysparm_display_value': True,
+        'sysparm_min_fields': 'sys_created_on',
+        'sysparm_group_by': 'u_drink_requester',
+        'sysparm_query': f'sys_created_on>javascript:gs.endOfYesterday()^u_drink_requester={name}^u_total_drinks>0'
+    }
+    aggregate_drinks_by_date.parameters.add_custom(params)
+    response = aggregate_drinks_by_date.get().all()
+    first_drink_time = response[0]['stats']['min']['sys_created_on']
+    return {'total': total, 'time': first_drink_time}
+
 @app.get('/noco/getNames', dependencies=[Depends(authorize)])
 async def get_names():
 
