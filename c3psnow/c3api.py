@@ -206,6 +206,7 @@ fields = ['sys_created_on', 'u_drink_requester', 'urgency', 'state',
 @app.get('/queue', dependencies=[Depends(authorize)])
 async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
     today = date.today().strftime("%Y-%m-%d")
+    print(date.today())
     incident_resource = snow_client.resource('/table/incident')
     params = {
         'sysparm_display_value': True,
