@@ -62,7 +62,7 @@ drink_map = {
     'Coors Light': 'u_drink_6',
     'New Belgium Voodoo Ranger IPA': 'u_drink_7',
     'Sam Adams Seasonal': 'u_drink_8',
-    'Unsweetended Iced Tea': 'u_soda_1',
+    'Unsweetened Iced Tea': 'u_soda_1',
     'Arnold Palmer': 'u_soda_2',
     'Water': 'u_water'
 }
