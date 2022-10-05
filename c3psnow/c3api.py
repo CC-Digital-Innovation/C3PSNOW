@@ -209,7 +209,6 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
     print(date.today().strftime("%Y-%m-%d %H:%M"))
     incident_resource = snow_client.resource('/table/incident')
     params = {
-        'sysparm_display_value': True,
         'sysparm_limit': limit,
         'sysparm_offset': offset,
         'sysparm_fields': ','.join(fields),
