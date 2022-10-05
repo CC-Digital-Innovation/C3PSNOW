@@ -245,7 +245,10 @@ async def get_bac_stats(name: str):
     }
     aggregate_drinks.parameters.add_custom(params)
     response = aggregate_drinks.get().all()
-    total = sum([int(n) for n in response[0]['stats']['sum'].values()])
+    try:
+        total = sum([int(n) for n in response[0]['stats']['sum'].values()])
+    except IndexError:
+        return {}
 
     aggregate_drinks_by_date = snow_client.resource('/stats/incident')
     # inconsistent results with pysnow, resorting to direct params
@@ -257,7 +260,10 @@ async def get_bac_stats(name: str):
     }
     aggregate_drinks_by_date.parameters.add_custom(params)
     response = aggregate_drinks_by_date.get().all()
-    first_drink_time = response[0]['stats']['min']['sys_created_on']
+    try:
+        first_drink_time = response[0]['stats']['min']['sys_created_on']
+    except IndexError:
+        return {}
     return {'total': total, 'time': first_drink_time}
 
 @app.get('/noco/getNames', dependencies=[Depends(authorize)])
