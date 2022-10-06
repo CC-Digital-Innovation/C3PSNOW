@@ -4,7 +4,6 @@ from copy import deepcopy
 from enum import Enum
 from operator import itemgetter
 from pathlib import PurePath
-from datetime import date
 import dotenv
 import pysnow
 import requests
@@ -132,16 +131,15 @@ def _add_rank(payload: list[dict], key_name: str) -> list[dict]:
 
 @app.get('/rank/requestors', dependencies=[Depends(authorize)])
 async def get_top_requestors():
-    today = date.today().strftime("%Y-%m-%d")
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
         'sysparm_group_by': 'u_drink_requester',
         'sysparm_display_value': True,
-        'sysparm_sum_fields': ','.join(drink_map.values())
+        'sysparm_sum_fields': ','.join(drink_map.values()),
+        'sysparm_query': 'u_drink_requesterISNOTEMPTY^sys_created_on>javascript:gs.endOfYesterday()'
     }
     aggregate_inc_resrc.parameters.add_custom(params)
-    query = pysnow.QueryBuilder().field('u_drink_requester').is_not_empty().AND().field('opened_at').contains(today)
-    response = aggregate_inc_resrc.get(query).all()
+    response = aggregate_inc_resrc.get().all()
     payload = []
     for requestor in response:
         total = sum([int(n) for n in requestor['stats']['sum'].values()])
@@ -155,35 +153,34 @@ async def get_top_requestors():
 
 @app.get('/rank/drinks', dependencies=[Depends(authorize)])
 async def get_top_drinks():
-    today = date.today().strftime("%Y-%m-%d")
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
         'sysparm_display_value': True,
-        'sysparm_sum_fields': ','.join(drink_map.values())
+        'sysparm_sum_fields': ','.join(drink_map.values()),
+        'sysparm_query': 'sys_created_on>javascript:gs.endOfYesterday()'
     }
     aggregate_inc_resrc.parameters.add_custom(params)
-    query = pysnow.QueryBuilder().field('opened_at').contains(today)
-    response = aggregate_inc_resrc.get(query).all()
+    response = aggregate_inc_resrc.get().all()
     payload = []
     for drink_key, total in response[0]['stats']['sum'].items():
-        payload.append({
-            'name': next((k for k, v in drink_map.items() if v == drink_key)),
-            'total': int(total)
-        })
+        if int(total):
+            payload.append({
+                'name': next((k for k, v in drink_map.items() if v == drink_key)),
+                'total': int(total)
+            })
     return _add_rank(payload, 'total')
 
 @app.get('/rank/holes', dependencies=[Depends(authorize)])
 async def get_top_holes():
-    today = date.today().strftime("%Y-%m-%d")
     aggregate_inc_resrc = snow_client.resource('/stats/incident')
     params = {
         'sysparm_group_by': 'location',
         'sysparm_sum_fields': ','.join(drink_map.values()),
-        'sysparm_display_value': True
+        'sysparm_display_value': True,
+        'sysparm_query': 'locationSTARTSWITHHole^sys_created_on>javascript:gs.endOfYesterday()'
     }
     aggregate_inc_resrc.parameters.add_custom(params)
-    query = pysnow.QueryBuilder().field('location').starts_with('Hole').AND().field('opened_at').contains(today)
-    response = aggregate_inc_resrc.get(query).all()
+    response = aggregate_inc_resrc.get().all()
     payload = [{
         'name': location['groupby_fields'][0]['value'],
         'total': sum([int(n) for n in location['stats']['sum'].values()])
@@ -205,14 +202,12 @@ fields = ['sys_created_on', 'u_drink_requester', 'urgency', 'state',
 
 @app.get('/queue', dependencies=[Depends(authorize)])
 async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
-    today = date.today().strftime("%Y-%m-%d")
-    print(date.today().strftime("%Y-%m-%d %H:%M"))
     incident_resource = snow_client.resource('/table/incident')
     params = {
         'sysparm_limit': limit,
         'sysparm_offset': offset,
         'sysparm_fields': ','.join(fields),
-        'sysparm_query': 'u_drink_requesterISNOTEMPTY^ORDERBYurgency^ORDERBYsys_created_on'
+        'sysparm_query': 'sys_created_on>javascript:gs.endOfYesterday()^u_drink_requesterISNOTEMPTY^ORDERBYurgency^ORDERBYsys_created_on'
     }
     # inconsistent results with pysnow, resorting to direct params
     if state:
@@ -221,12 +216,11 @@ async def get_queue(state: State = None, offset: int = 0, limit: int = 10):
     orders = incident_resource.get().all()
     retorder=[]
     for order in orders:
-        if today in order['sys_created_on']:
-            order['total_drinks'] = (int(order['u_drink_1']) + int(order['u_drink_2']) 
-                + int(order['u_drink_3']) + int(order['u_drink_4']) + int(order['u_drink_5']) 
-                + int(order['u_drink_6']) + int(order['u_drink_7']) + int(order['u_drink_8']) 
-                + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
-            retorder.append(order)
+        order['total_drinks'] = (int(order['u_drink_1']) + int(order['u_drink_2']) 
+            + int(order['u_drink_3']) + int(order['u_drink_4']) + int(order['u_drink_5']) 
+            + int(order['u_drink_6']) + int(order['u_drink_7']) + int(order['u_drink_8']) 
+            + int(order['u_soda_1']) + int(order['u_soda_2']) + int(order['u_water']))
+        retorder.append(order)
     return retorder
 
 alcoholic = ['u_drink_1', 'u_drink_2', 'u_drink_3', 'u_drink_4', 'u_drink_5', 
