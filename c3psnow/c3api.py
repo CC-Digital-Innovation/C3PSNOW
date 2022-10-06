@@ -97,7 +97,7 @@ async def send_order(order: Order):
 
         inc['u_phone_number']=phone
         inc['u_cart_number']=response.json()['CartID']    #Use pysnow to screate snow incident
-
+        inc['short_description'] = description + f"from cart {inc['u_cart_number']} "
     try:
         result = incident_resource.create(payload=inc)
     except Exception:
