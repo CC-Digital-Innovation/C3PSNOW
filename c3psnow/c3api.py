@@ -83,7 +83,7 @@ async def send_order(order: Order):
         inc[drinksnowname] = quant
         if quant != 0:
             description = description + f"{drink} qty: {quant} "
-    inc['short_description'] = description + f"at {order.hole_Num} "
+
 
     nocorul = f"{NOCOBASEURL}/findOne"
 
@@ -97,7 +97,9 @@ async def send_order(order: Order):
 
         inc['u_phone_number']=phone
         inc['u_cart_number']=response.json()['CartID']    #Use pysnow to screate snow incident
-        inc['short_description'] = description + f"from cart {inc['u_cart_number']} "
+        inc['short_description'] = description + f"from cart {inc['u_cart_number']} at {order.hole_Num}"
+    else:
+        inc['short_description'] = description + f"at {order.hole_Num} "
     try:
         result = incident_resource.create(payload=inc)
     except Exception:
