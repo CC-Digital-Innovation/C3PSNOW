@@ -1,6 +1,6 @@
 resources:
 # resource for triggering pipeline
-- name: c3psnow
+- name: repo
   type: git
   icon: github
   source:
@@ -15,7 +15,7 @@ resources:
     - .gitignore
     - version
 # resource of where to push image
-- name: c3psnow-image
+- name: registry
   type: registry-image
   icon: gitlab
   source:
@@ -23,7 +23,7 @@ resources:
     username: ((gitlab.username))
     password: ((gitlab.password))
     variant: dev
-# resoruce to bump version
+# resource for versioning
 - name: version
   type: semver
   source:
@@ -33,11 +33,24 @@ resources:
     username: ((git.username))
     password: ((git.password))
     file: version
+# resource to send to slack
+- name: notifier
+  type: slack-notifier
+  source:
+    driver: git
+    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+    branch: feat-auto-tag
+    username: ((git.username))
+    password: ((git.password))
+    file: version
 
 jobs:
-- name: build-and-push
+- name: ci-cd
   plan:
-  - get: c3psnow
+  - put: notifier
+    params:
+      alert_type: started
+  - get: repo
     trigger: true
   - task: build-task-image
     privileged: true
@@ -48,25 +61,75 @@ jobs:
         source:
           repository: concourse/oci-build-task
       inputs:
-      - name: c3psnow
+      - name: repo
       outputs:
       - name: image
-      - name: c3psnow
+      - name: repo
       params:
-        CONTEXT: c3psnow
+        CONTEXT: repo
       run:
         path: build
-  - put: version
+  - get: version
     params:
       bump: patch
   - load_var: version_num
     file: version/version
-  - put: c3psnow-image
+  - put: registry
     params:
       image: image/image.tar
       version: ((.:version_num))
       bump_aliases: true
-  - put: c3psnow
+  - task: bump-with-yq
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: docker.io/mikefarah/yq
+      inputs: 
+      - name: repo
+      outputs:
+      - name: repo
+      run:
+        path: sh
+        args:
+        - -exc
+        - |
+          cd repo
+          yq -i '.spec.template.spec.containers[0].image = "((gitlab.repository))/c3psnow/c3psnow:((.:version_num))-dev"' kubernetes/c3psnow-deployment.yml
+        user: root
+  - task: git-push-bump
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: docker.io/alpine/git
+      inputs: 
+      - name: repo
+      outputs:
+      - name: repo
+      run:
+        path: sh
+        args:
+        - -exc
+        - |
+          cd repo
+          git config --global user.email '<>'
+          git config --global user.name "Concourse Bot"
+          git add kubernetes/c3psnow-deployment.yml
+          git commit -m 'bump version ((.:version_num))'
+  - put: repo
+    params:
+      repository: repo
+  - put: version
+    params:
+      file: version/version
+  - put: notifier
+    params:
+      alert_type: success
+  on_failure:
+    put: notifier
     params:
       repository: c3psnow
       only_tag: true
