@@ -29,7 +29,7 @@ spec:
         app: c3psnow-dev
     spec:
       containers:
-        - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.21-dev
+        - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.22-dev
           name: c3psnow-dev
           args: ['/bin/bash', '-c', 'source /vault/secrets/api && source /vault/secrets/snow && python main.py']
           ports:
