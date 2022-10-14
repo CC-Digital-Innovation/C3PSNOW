@@ -1,4 +1,15 @@
 resources:
+# resource for reconfiguring pipeline
+- name: repo-read
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+    branch: feat-auto-tag
+    username: ((git.username))
+    password: ((git.password))
+    paths:
+    - pipeline.yml
 # resource for triggering pipeline; read-only
 - name: repo-read
   type: git
@@ -10,7 +21,7 @@ resources:
     password: ((git.password))
     ignore_paths:
     - README.md
-    - pipeline.yaml
+    - pipeline.yml
     - kubernetes
     - .gitignore
     - version
@@ -35,6 +46,7 @@ resources:
 # resource for versioning
 - name: version
   type: semver
+  icon: numeric
   source:
     driver: git
     uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
@@ -45,6 +57,7 @@ resources:
 # resource to send to slack
 - name: notifier
   type: slack-notifier
+  icon: slack
   source:
     url: ((slack.webhook))
 
@@ -58,15 +71,28 @@ resource_types:
 jobs:
 - name: set-pipeline
   plan:
-- name: build-and-push-image
-  plan:
+  - get: repo-pipeline
+    trigger: true
   - put: notifier
     params:
       alert_type: started
+  - set_pipeline: c3psnow-dev
+    file: repo-pipeline/pipeline.yml
+  - put: notifier
+    params:
+      alert_type: success
+  on_failure:
+    put: notifier
+    params:
+      alert_type: failed
+
+- name: build-and-push-image
+  plan:
   - get: repo-read
     trigger: true
-  - set_pipeline: c3psnow-dev
-    file: repo-read/pipeline.yml
+  - put: notifier
+    params:
+      alert_type: started
   - task: build-task-image
     privileged: true
     config:
@@ -114,7 +140,7 @@ jobs:
           cd repo-write
           yq -i '.spec.template.spec.containers[0].image = "((gitlab.repository))/c3psnow/c3psnow:((.:version_num))-dev"' kubernetes/c3psnow-deployment.yml
         user: root
-  - task: git-push-bump
+  - task: git-commit-bump
     config:
       platform: linux
       image_resource:
