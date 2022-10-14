@@ -2,14 +2,13 @@ import configparser
 import os
 import secrets
 from copy import deepcopy
+from typing import Union
 
 import dotenv
 import pysnow
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.params import Form
 from fastapi.security import APIKeyHeader
-
-import pymods.opsgen as opsgen
 
 # load secrets from .env
 dotenv.load_dotenv()
@@ -153,3 +152,9 @@ async def get_top_holes():
         'total': int(requestor['stats']['count'])
     } for requestor in response]
     return _add_rank(payload, 'total')
+
+@app.get('/helloWorld')
+async def hello_world(name: Union[str, None] = None):
+    if name:
+        return f'Hello, {name}!'
+    return 'Hello, World!'
