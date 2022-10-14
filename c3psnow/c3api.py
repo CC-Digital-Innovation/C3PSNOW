@@ -152,9 +152,3 @@ async def get_top_holes():
         'total': int(requestor['stats']['count'])
     } for requestor in response]
     return _add_rank(payload, 'total')
-
-@app.get('/helloWorld')
-async def hello_world(name: Union[str, None] = None):
-    if name:
-        return f'Hello, {name}!'
-    return 'Hello, World!'
