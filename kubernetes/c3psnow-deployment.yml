@@ -29,12 +29,11 @@ spec:
         app: c3psnow-dev
     spec:
       containers:
-      - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.15-dev
-        name: c3psnow-dev
-        args:
-          [ '/bin/bash', '-c', 'source /vault/secrets/api && source /vault/secrets/snow && python main.py' ]
-        ports:
-        - containerPort: 8000
+        - image: registry.quokka.ninja/ccfs/c3psnow/c3psnow:0.1.20-dev
+          name: c3psnow-dev
+          args: ['/bin/bash', '-c', 'source /vault/secrets/api && source /vault/secrets/snow && python main.py']
+          ports:
+            - containerPort: 8000
       imagePullSecrets:
         - name: gitlab-cr
       serviceAccountName: c3psnow
