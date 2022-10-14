@@ -1,15 +1,4 @@
 resources:
-# resource for updating pipeline config
-- name: repo-pipeline
-  type: git
-  icon: github
-  source:
-    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
-    branch: feat-auto-tag
-    username: ((git.username))
-    password: ((git.password))
-    paths:
-    - pipeline.yml
 # resource for triggering pipeline; read-only
 - name: repo-read
   type: git
@@ -69,10 +58,6 @@ resource_types:
 jobs:
 - name: set-pipeline
   plan:
-  - get: repo-pipeline
-    trigger: true
-  - set_pipeline: c3psnow-dev
-    file: repo-pipeline/pipeline.yml
 - name: build-and-push-image
   plan:
   - put: notifier
@@ -80,6 +65,8 @@ jobs:
       alert_type: started
   - get: repo-read
     trigger: true
+  - set_pipeline: c3psnow-dev
+    file: repo-read/pipeline.yml
   - task: build-task-image
     privileged: true
     config:
