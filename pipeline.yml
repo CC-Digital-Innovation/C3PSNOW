@@ -107,6 +107,7 @@ jobs:
       image: image/image.tar
       version: ((.:version_num))
       bump_aliases: true
+  - get: repo-write
   - task: bump-with-yq
     config:
       platform: linux
