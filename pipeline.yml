@@ -1,6 +1,6 @@
 resources:
 # resource for reconfiguring pipeline
-- name: repo-read
+- name: repo-pipeline
   type: git
   icon: github
   source:
