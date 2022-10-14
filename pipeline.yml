@@ -1,6 +1,17 @@
 resources:
-# resource for triggering pipeline
-- name: repo
+# resource for updating pipeline config
+- name: repo-pipeline
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+    branch: feat-auto-tag
+    username: ((git.username))
+    password: ((git.password))
+    paths:
+    - pipeline.yml
+# resource for triggering pipeline; read-only
+- name: repo-read
   type: git
   icon: github
   source:
@@ -14,6 +25,15 @@ resources:
     - kubernetes
     - .gitignore
     - version
+# resource for writing to repository; write-only to avoid retriggering pipeline
+- name: repo-write
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+    branch: feat-auto-tag
+    username: ((git.username))
+    password: ((git.password))
 # resource of where to push image
 - name: registry
   type: registry-image
@@ -37,20 +57,28 @@ resources:
 - name: notifier
   type: slack-notifier
   source:
-    driver: git
-    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
-    branch: feat-auto-tag
-    username: ((git.username))
-    password: ((git.password))
-    file: version
+    url: ((slack.webhook))
+
+# add slack resource
+resource_types:
+- name: slack-notifier
+  type: docker-image
+  source:
+    repository: mockersf/concourse-slack-notifier
 
 jobs:
-- name: ci-cd
+- name: set-pipeline
+  plan:
+  - get: repo-pipeline
+    trigger: true
+  - set_pipeline: c3psnow-dev
+    file: repo-pipeline/pipeline.yml
+- name: build-and-push-image
   plan:
   - put: notifier
     params:
       alert_type: started
-  - get: repo
+  - get: repo-read
     trigger: true
   - task: build-task-image
     privileged: true
@@ -61,12 +89,12 @@ jobs:
         source:
           repository: concourse/oci-build-task
       inputs:
-      - name: repo
+      - name: repo-read
       outputs:
       - name: image
-      - name: repo
+      - name: repo-read
       params:
-        CONTEXT: repo
+        CONTEXT: repo-read
       run:
         path: build
   - get: version
@@ -87,15 +115,15 @@ jobs:
         source:
           repository: docker.io/mikefarah/yq
       inputs: 
-      - name: repo
+      - name: repo-write
       outputs:
-      - name: repo
+      - name: repo-write
       run:
         path: sh
         args:
         - -exc
         - |
-          cd repo
+          cd repo-write
           yq -i '.spec.template.spec.containers[0].image = "((gitlab.repository))/c3psnow/c3psnow:((.:version_num))-dev"' kubernetes/c3psnow-deployment.yml
         user: root
   - task: git-push-bump
@@ -106,9 +134,9 @@ jobs:
         source:
           repository: docker.io/alpine/git
       inputs: 
-      - name: repo
+      - name: repo-write
       outputs:
-      - name: repo
+      - name: repo-write
       run:
         path: sh
         args:
@@ -119,9 +147,9 @@ jobs:
           git config --global user.name "Concourse Bot"
           git add kubernetes/c3psnow-deployment.yml
           git commit -m 'bump version ((.:version_num))'
-  - put: repo
+  - put: repo-write
     params:
-      repository: repo
+      repository: repo-write
   - put: version
     params:
       file: version/version
@@ -131,7 +159,4 @@ jobs:
   on_failure:
     put: notifier
     params:
-      repository: c3psnow
-      only_tag: true
-      tag: c3psnow/version
-      tag_prefix: v
+      alert_type: failed
