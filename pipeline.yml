@@ -26,7 +26,7 @@ resources:
     - .gitignore
     - version
 # resource for writing to repository; write-only to avoid retriggering pipeline
-- name: repo-write
+- name: bump-repo
   type: git
   icon: github
   source:
@@ -120,7 +120,7 @@ jobs:
       image: image/image.tar
       version: ((.:version_num))
       bump_aliases: true
-  - get: repo-write
+  - get: bump-repo
   - task: bump-with-yq
     config:
       platform: linux
@@ -129,15 +129,15 @@ jobs:
         source:
           repository: docker.io/mikefarah/yq
       inputs: 
-      - name: repo-write
+      - name: bump-repo
       outputs:
-      - name: repo-write
+      - name: bump-repo
       run:
         path: sh
         args:
         - -exc
         - |
-          cd repo-write
+          cd bump-repo
           yq -i '.spec.template.spec.containers[0].image = "((gitlab.repository))/c3psnow/c3psnow:((.:version_num))-dev"' kubernetes/c3psnow-deployment.yml
         user: root
   - task: git-commit-bump
@@ -148,22 +148,22 @@ jobs:
         source:
           repository: docker.io/alpine/git
       inputs: 
-      - name: repo-write
+      - name: bump-repo
       outputs:
-      - name: repo-write
+      - name: bump-repo
       run:
         path: sh
         args:
         - -exc
         - |
-          cd repo-write
+          cd bump-repo
           git config --global user.email '<>'
           git config --global user.name "Concourse Bot"
           git add kubernetes/c3psnow-deployment.yml
           git commit -m 'bump version ((.:version_num))'
-  - put: repo-write
+  - put: bump-repo
     params:
-      repository: repo-write
+      repository: bump-repo
   - put: version
     params:
       file: version/version
