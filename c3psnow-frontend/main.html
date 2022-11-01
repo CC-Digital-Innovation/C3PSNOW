@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>C-3PSNOW</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT"
+      crossorigin="anonymous"
+    />
+    <link href="default.css" rel="stylesheet" />
+    <link rel="icon" href="./images/C-3PSNOW.png">
+  </head>
+
+  <body>
+    <div class="container py-3 px-3">
+      <header>
+        <div class="d-flex">
+          <div class="col-4 text-center">
+            <button class="btn pe-3" id="play" type="button">
+              <img
+                src="images/C-3PSNOW.png"
+                class="me-3 mb-3"
+                width="100"
+                height="100"
+                alt="C-3PSNOW"
+              />
+            </button>
+            <!-- <button class="btn" id="volume-btn">
+              <img
+                src="sounds/volume-up-4-32.png"
+                id="volume"
+                width="32"
+                height="32"
+                alt="volume"
+              />
+            </button> -->
+          </div>
+          <p class="ms-3">
+            <font size="+2"><strong>C-3PSNOW ®</strong></font>
+            <br>
+            <i>Computacenter Cocktail Concierge powered by ServiceNow</i>
+          </p>
+        </div>
+        <audio src="sounds/c-3psnow.mp3" id="bg-audio">
+          Audio not supported.
+        </audio>
+      </header>
+      <hr class="mt-0" />
+      <main>
+        <div class="d-grid gap-5 col-8 my-5 mx-auto">
+          <a href="order.html" class="btn btn-primary" role="button"
+            >Place Order</a
+          >
+          <a href="queue.html" class="btn btn-primary" role="button"
+            >Order Queue/Status</a
+          >
+          <a href="leaderboard.html" class="btn btn-primary" role="button"
+            >Leaderboard</a
+          >
+          <a href="responsibility.html" class="btn btn-primary" role="button"
+            >Responsibility Index</a
+          >
+        </div>
+      </main>
+      <footer>
+        <div class="container">
+          <hr />
+          <div class="row text-end">
+            <a class="mb-3" href="credits.html">View Trailer, Credits & License</a>
+            <a class="mb-3" href="architecture.html">View Application Architecture</a>
+          </div>
+          <div class="row">
+            <p id="play2">ⓒ 2022 Computacenter, Digital Innovation</p>
+            <audio src="sounds/main-easteregg.mp3" id="bg-audio2">
+              Audio not supported.
+            </audio>
+          </div>
+          
+        </div>
+      </footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap.native@4.2.0/dist/bootstrap-native.min.js"></script>
+    <script>
+      document
+        .getElementById("play")
+        .addEventListener("click", ({ target }) => {
+          document.getElementById("bg-audio").play();
+        });
+      document
+        .getElementById("play2")
+        .addEventListener("click", ({ target }) => {
+          document.getElementById("bg-audio2").play();
+        });
+    </script>
+    <!-- <script type="text/javascript">
+      window._chatlio = window._chatlio||[];
+      !function(){ var t=document.getElementById("chatlio-widget-embed");if(t&&window.ChatlioReact&&_chatlio.init)return void _chatlio.init(t,ChatlioReact);for(var e=function(t){return function(){_chatlio.push([t].concat(arguments)) }},i=["configure","identify","track","show","hide","isShown","isOnline", "page", "open", "showOrHide"],a=0;a<i.length;a++)_chatlio[i[a]]||(_chatlio[i[a]]=e(i[a]));var n=document.createElement("script"),c=document.getElementsByTagName("script")[0];n.id="chatlio-widget-embed",n.src="https://w.chatlio.com/w.chatlio-widget.js",n.async=!0,n.setAttribute("data-embed-version","2.3");
+         n.setAttribute('data-widget-id','22bf6b0c-85b3-4192-7129-5c884937ea31');
+         c.parentNode.insertBefore(n,c);
+      }();
+  </script>   -->
+  </body>
+</html>

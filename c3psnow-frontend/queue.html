@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>C-3PSNOW Queue</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT"
+      crossorigin="anonymous"
+    />
+    <link href="default.css" rel="stylesheet" />
+    <link rel="icon" href="./images/C-3PSNOW.png">
+  </head>
+
+  <body>
+    <div class="container py-3 px-3">
+      <header>
+        <div class="d-flex">
+          <a href="main.html">
+            <img
+              src="images/C-3PSNOW.png"
+              class="me-3 mb-3"
+              width="95"
+              height="95"
+              alt="C-3PSNOW"
+            />
+          </a>
+          <div class="col">
+            <p>
+              <strong>
+                <font size="+2"><strong id="play2">Queue/Status</strong></font>
+                <br>
+                <span class="fs-1">&larr;</span> <small><i>Touch my face to return home.</i></small>
+              </strong>
+            </p>
+            <audio src="sounds/transport.mp3" id="bg-audio2">
+              Audio not supported.
+            </audio>
+            <!-- <p>
+              <span class="fs-1">&larr;</span> "Also, click my face to return
+              home."
+            </p> -->
+          </div>
+        </div>
+      </header>
+      <hr class="mt-0" />
+      <main>
+        <!-- <h1>C-3PSNOW Queue</h1> -->
+        <div class="accordion accordion-flush">
+          <div class="accordion-item">
+            <button
+              type="button"
+              class="accordion-button collapsed"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapse-awaiting"
+              aria-expanded="false"
+            >
+              New Orders
+            </button>
+          </div>
+          <div class="accordion-collapse collapse" id="collapse-awaiting">
+            <table
+              id="awaiting"
+              class="table table-dark table-striped table-sm accordion-body"
+            >
+              <thead>
+                <th scope="col">Name</th>
+                <th scope="col">Drinks</th>
+                <th scope="col">Time</th>
+                <th scope="col">Priority</th>
+              </thead>
+            </table>
+          </div>
+          <div class="accordion-item">
+            <button
+              type="button"
+              class="accordion-button collapsed"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapse-making"
+              aria-expanded="false"
+            >
+              Making Drinks
+            </button>
+          </div>
+          <div class="accordion-collapse collapse" id="collapse-making">
+            <table
+              id="making"
+              class="table table-dark table-striped table-sm accordion-body"
+            >
+              <thead>
+                <th scope="col">Name</th>
+                <th scope="col">Drinks</th>
+                <th scope="col">Time</th>
+                <th scope="col">Priority</th>
+              </thead>
+            </table>
+          </div>
+          <div class="accordion-item">
+            <button
+              type="button"
+              class="accordion-button collapsed"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapse-deliver"
+              aria-expanded="false"
+            >
+              Delivering
+            </button>
+          </div>
+          <div class="accordion-collapse collapse" id="collapse-deliver">
+            <table
+              id="deliver"
+              class="table table-dark table-striped table-sm accordion-body"
+            >
+              <thead>
+                <th scope="col">Name</th>
+                <th scope="col">Drinks</th>
+                <th scope="col">Time</th>
+                <th scope="col">Priority</th>
+              </thead>
+            </table>
+          </div>
+          <button
+            type="button"
+            class="accordion-button collapsed"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapse-done"
+            aria-expanded="false"
+          >
+            Done
+          </button>
+          <div class="accordion-collapse collapse" id="collapse-done">
+            <table
+              id="done"
+              class="table table-dark table-striped table-sm accordion-body"
+            >
+              <thead>
+                <th scope="col">Name</th>
+                <th scope="col">Drinks</th>
+                <th scope="col">Time</th>
+                <th scope="col">Priority</th>
+              </thead>
+            </table>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <div class="container-fluid text-center">
+          <hr />
+          <p id="play">ⓒ 2022 Computacenter, Digital Innovation</p>
+          <audio src="sounds/queue-easteregg.mp3" id="bg-audio">
+            Audio not supported.
+          </audio>
+        </div>
+      </footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap.native@4.2.0/dist/bootstrap-native.min.js"></script>
+    <script>
+      const url = "https://k3sdev.quokka.ninja/c3psnow/queue";
+      const apiKey = "2022_C-3PSNOW";
+
+      async function getQueue(state) {
+        const response = await fetch(
+          url +
+            "?" +
+            new URLSearchParams({
+              state: state,
+              limit: 50
+            }),
+          {
+            method: "GET",
+            headers: {
+              "X-API-Key": apiKey
+            }
+          }
+        );
+        return response.json();
+      }
+
+      function queueTable(list) {
+        let tableBody = document.createElement("tbody");
+        list.forEach((item) => {
+          let row = tableBody.insertRow();
+          let name = row.insertCell();
+          name.innerHTML = item.u_drink_requester;
+          let drinks = row.insertCell();
+          drinks.innerHTML = item.total_drinks;
+          let time = row.insertCell();
+          time.innerHTML = formatTime(
+            new Date() - new Date(item.sys_created_on + "+00:00")
+          );
+          let priority = row.insertCell();
+          priority.innerHTML = item.urgency;
+        });
+        return tableBody;
+      }
+
+      function formatTime(ms) {
+        let seconds = Math.round(ms / 1000);
+        if (seconds < 60) {
+          return "< min ago";
+        } else if (seconds === 60) {
+          return "1 min ago";
+        } else if (seconds < 3600) {
+          return `${Math.round(seconds / 60)} mins ago`;
+        } else if (seconds === 3600) {
+          return "1 hr ago";
+        } else {
+          return `${Math.round(seconds / 3600)} hrs ago`;
+        }
+      }
+
+      document
+        .getElementById("collapse-awaiting")
+        .addEventListener("shown.bs.collapse", function (event) {
+          let table = document.getElementById("awaiting");
+          // add data only once
+          if (table.classList.contains("filled") === false) {
+            getQueue("New").then((data) => {
+              table.appendChild(queueTable(data));
+            });
+            table.classList.add("filled");
+          }
+        });
+
+      document
+        .getElementById("collapse-making")
+        .addEventListener("shown.bs.collapse", function (event) {
+          let table = document.getElementById("making");
+          if (table.classList.contains("filled") === false) {
+            getQueue("Drink Being Made").then((data) => {
+              table.appendChild(queueTable(data));
+            });
+            table.classList.add("filled");
+          }
+        });
+
+      document
+        .getElementById("collapse-deliver")
+        .addEventListener("shown.bs.collapse", function (event) {
+          let table = document.getElementById("deliver");
+          if (table.classList.contains("filled") === false) {
+            getQueue("Drink Being Delivered").then((data) => {
+              table.appendChild(queueTable(data));
+            });
+            table.classList.add("filled");
+          }
+        });
+
+      document
+        .getElementById("collapse-done")
+        .addEventListener("shown.bs.collapse", function (event) {
+          let table = document.getElementById("done");
+          if (table.classList.contains("filled") === false) {
+            getQueue("Closed").then((data) => {
+              table.appendChild(queueTable(data));
+            });
+            table.classList.add("filled");
+          }
+        });
+    </script>
+    <script>
+      document
+        .getElementById("play")
+        .addEventListener("click", ({ target }) => {
+          document.getElementById("bg-audio").play();
+        });
+      document
+        .getElementById("play2")
+        .addEventListener("click", ({ target }) => {
+          document.getElementById("bg-audio2").play();
+        });
+    </script>
+  </body>
+</html>

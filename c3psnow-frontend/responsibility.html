@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT"
+      crossorigin="anonymous"
+    />
+    <link href="default.css" rel="stylesheet" />
+    <link rel="icon" href="./images/C-3PSNOW.png" />
+    <style>
+      .form-control {
+        background-color: #1f4792;
+        border: #1f4792;
+        color: white;
+      }
+
+      .form-control::placeholder {
+        color: white;
+      }
+
+      datalist {
+        height: 100px;
+        overflow: auto;
+      }
+    </style>
+    <title>Responsibility Index</title>
+  </head>
+  <body>
+    <div class="container py-3 px-3">
+      <header>
+        <div class="d-flex align-items-center">
+          <a href="main.html">
+            <img
+              src="images/C-3PSNOW.png"
+              class="me-3 mb-3"
+              width="95"
+              height="95"
+              alt="C-3PSNOW"
+            />
+          </a>
+          <div class="col align-items-center">
+            <p>
+              <font size="+2"><strong>Responsibility Index</strong></font>
+              <br />
+              <strong
+                ><span class="fs-1">&larr;</span>
+                <small><i>Touch my face to return home.</i></small></strong
+              >
+            </p>
+          </div>
+        </div>
+      </header>
+      <hr class="mt-0" />
+      <main>
+        <div class="container-fluid">
+          <div class="row mb-3 text-center">
+            <input
+              class="form-control"
+              list="names"
+              placeholder="Type to search name..."
+            />
+            <datalist id="names"></datalist>
+          </div>
+          <div class="row mb-3 text-center">
+            <div class="col">
+              <p>Your BAC: <span id="bac">0</span>%</p>
+            </div>
+            <div class="col">
+              <img src="images/traffic.png" width="70vw" id="traffic" />
+            </div>
+          </div>
+          <div class="row mb-3">
+            <p>Effects at this level:</p>
+            <p id="effects"></p>
+          </div>
+          <div class="row mb-3">
+            <p>
+              <small
+                ><i>
+                  Disclaimer: This feature uses averaged statistics (like
+                  weight, alcohol absorbtion and elimination rates) to calculate
+                  BAC. The feature makes not claims regarding accuracy, it is
+                  not intended to replace solid judgement, medicial advice,
+                  care, or counsel and should be considered a
+                  <strong>NOVELTY FEATURE</strong>
+                  intened to demotrate data driven decision making. Please drink
+                  responsibly and consider other modes of transportation:
+                  <a href="uber://">Uber</a>, <a href="lyft://">Lyft</a>, or
+                  with a friend.</i
+                ></small
+              >
+            </p>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <div class="container-fluid text-center">
+          <hr />
+          <p>ⓒ 2022 Computacenter, Digital Innovation</p>
+        </div>
+      </footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap.native@4.2.0/dist/bootstrap-native.min.js"></script>
+    <script>
+      function poundsToKgs(pounds) {
+        return pounds / 2.2046;
+      }
+
+      function waterPercentage(gender) {
+        var maleWaterPercentage = 0.58;
+        var femaleWaterPercentage = 0.49;
+
+        var waterPercentage = maleWaterPercentage;
+        if (gender === "F") {
+          waterPercentage = femaleWaterPercentage;
+        }
+
+        // ignore gender, use median
+        return 0.535;
+      }
+
+      function totalBodyWaterPercentage(weightInKgs, waterPercentage) {
+        return weightInKgs * waterPercentage;
+      }
+
+      function theoreticalBacPeak(totalBodyWaterPercentage, beers) {
+        var bacTotalTheoreticalPeak = 0;
+        var count = Object.keys(beers).length;
+
+        for (var i = 0; i < count; i++) {
+          var abv = beers[i].abv;
+          var ounces = beers[i].ounces;
+          var bacTheoreticalPeak = this.theoreticalBacPeakPerDrink(
+            totalBodyWaterPercentage,
+            ounces,
+            abv
+          );
+
+          bacTotalTheoreticalPeak += bacTheoreticalPeak;
+        }
+
+        return bacTotalTheoreticalPeak;
+      }
+
+      function theoreticalBacPeakPerDrink(
+        totalBodyWaterPercentage,
+        ounces,
+        abv
+      ) {
+        var weightInGramsOf1OzAlcohol = 23.36;
+        var gramsAlcoholPerMlOfWater =
+          weightInGramsOf1OzAlcohol / (totalBodyWaterPercentage * 1000);
+        var ouncesOfAlcohol = ounces * abv;
+        var waterPercentageInBlood = 0.806;
+        var alcoholConcentrationInBlood =
+          gramsAlcoholPerMlOfWater * waterPercentageInBlood;
+        var alcoholConcentrationInBloodPer100Ml =
+          alcoholConcentrationInBlood * 100;
+        var bacTheoreticalPeak =
+          ouncesOfAlcohol * alcoholConcentrationInBloodPer100Ml;
+
+        return bacTheoreticalPeak;
+      }
+
+      function bacAfterElapsedTime(
+        bacTotalTheoreticalPeak,
+        totalTimeInHours,
+        metabolismRate
+      ) {
+        // .02 - above average
+        // .017 - average
+        // .012 - below average
+
+        if (metabolismRate < 0.012 || metabolismRate > 0.02) {
+          throw new Error("metabolism rate out of bounds");
+        }
+
+        var bacAfterElapsedTime =
+          bacTotalTheoreticalPeak - metabolismRate * totalTimeInHours;
+        return bacAfterElapsedTime;
+      }
+
+      class BAC {
+        constructor(gender, weightInLbs, metabolism) {
+          this.gender = gender.toUpperCase(); // M, F
+          this.weight = poundsToKgs(weightInLbs); // in kg
+          this.metabolism = metabolism;
+        }
+
+        get waterPercentage() {
+          return waterPercentage(this.gender);
+        }
+
+        get totalBodyWaterPercentage() {
+          return totalBodyWaterPercentage(this.weight, this.waterPercentage);
+        }
+
+        bacAfterTime(beers, time) {
+          let tbac = theoreticalBacPeak(this.totalBodyWaterPercentage, beers);
+          return bacAfterElapsedTime(tbac, time, this.metabolism);
+        }
+      }
+
+      // from https://alcohol.org/effects/blood-alcohol-concentration/
+      function getEffects(percentage) {
+        if (percentage < 0.02) {
+          return "No effects.";
+        } else if (percentage < 0.05) {
+          return "This is the lowest level of intoxication with some measurable impact on the brain and body. You will feel relaxed, experience altered mood, feel a little warmer, and may make poor judgments.";
+        } else if (percentage < 0.08) {
+          return "At this level of BAC, your behavior will may become exaggerated. You may speak louder and gesture more. You may also begin to lose control of small muscles, like the ability to focus your eyes, so vision will become blurry.";
+        } else if (percentage < 0.1) {
+          return "This is the current legal limit in the U.S., other than Utah, and at this level it is considered illegal and unsafe to drive. You will lose more coordination, so your balance, speech, reaction times, and even hearing will get worse.";
+        } else if (percentage < 0.15) {
+          return "At this BAC, reaction time and control will be reduced, speech will be slurred, thinking and reasoning are slower, and the ability to coordinate your arms and legs is poor.";
+        } else if (percentage < 0.2) {
+          return "This BAC is very high. You will have much less control over your balance and voluntary muscles, so walking and talking are difficult. You may fall and hurt yourself.";
+        } else if (percentage < 0.3) {
+          return "Confusion, feeling dazed, and disorientation are common. Sensations of pain will change, so if you fall and seriously hurt yourself, you may not notice, and you are less likely to do anything about it. Nausea and vomiting are likely to occur, and the gag reflex will be impaired, which could cause choking or aspirating on vomit. Blackouts begin at this BAC, so you may participate in events that you don’t remember.";
+        } else if (percentage < 0.4) {
+          return "At this point, you may be unconscious and your potential for death increases. Along with a loss of understanding, at this BAC you’ll also experience severe increases in your heart rate, irregular breathing and may have a loss of bladder control.";
+        } else {
+          return "This level of BAC may put you in a coma or cause sudden death because your heart or breathing will suddenly stop. This is what is known as a lethal blood alcohol level.";
+        }
+      }
+
+      function getLight(percentage) {
+        if (percentage < 0.02) {
+          return "green";
+        } else if (percentage < 0.08) {
+          return "yellow";
+        } else {
+          return "red";
+        }
+      }
+
+      // weight according to the CDC: https://www.cdc.gov/nchs/fastats/body-measurements.htm
+      // use median weight, trying to ignore gender
+      const avgPerson = new BAC("M", 185.3, 0.015);
+
+      function setHtmlBac(bac) {
+        if (bac < 0) {
+          bac = 0;
+        }
+        document.getElementById("bac").innerText =
+          Math.round((bac + Number.EPSILON) * 100) / 100;
+        document.getElementById("effects").innerText = getEffects(bac);
+        let light = getLight(bac);
+        let lightImg = "";
+        if (light === "green") {
+          lightImg = "images/traffic-green.png";
+        } else if (light === "yellow") {
+          lightImg = "images/traffic-yellow.webp";
+        } else if (light === "red") {
+          lightImg = "images/traffic-red.png";
+        } else {
+          lightImg = "images/traffic.png";
+        }
+        document.getElementById("traffic").src = lightImg;
+      }
+
+      function resetHtmlBac() {
+        document.getElementById("bac").innerText = "0";
+        document.getElementById("effects").innerText = "";
+        document.getElementById("traffic").src = "images/traffic.png";
+      }
+
+      const url = "https://k3sdev.quokka.ninja/c3psnow";
+      const apiKey = "2022_C-3PSNOW";
+
+      async function getNames() {
+        const response = await fetch(url + "/noco/getNames", {
+          method: "GET",
+          headers: {
+            "X-API-Key": apiKey,
+          },
+        });
+        return response.json();
+      }
+
+      async function getBac(name) {
+        const response = await fetch(
+          url +
+            "/getBacStats" +
+            "?" +
+            new URLSearchParams({
+              name: name,
+            }),
+          {
+            method: "GET",
+            headers: {
+              "X-API-Key": apiKey,
+            },
+          }
+        );
+        return response.json();
+      }
+
+      let datalist = document.getElementById("names");
+      getNames().then((data) => {
+        data.forEach((name) => {
+          let option = document.createElement("option");
+          option.value = name;
+          datalist.appendChild(option);
+        });
+      });
+
+      let avgOz = 1.5;
+      let avgAbv = 0.4;
+
+      function convertDrinks(num) {
+        let drink = [];
+        for (let i = 0; i < num; i++) {
+          drink.push({ abv: avgAbv, ounces: avgOz });
+        }
+        return drink;
+      }
+
+      document.getElementsByTagName("input")[0].onchange = ({ target }) => {
+        let bac = 0;
+        getBac(target.value).then((data) => {
+          if (!("total" in data && "time" in data)) {
+            resetHtmlBac();
+          } else {
+            bac = avgPerson.bacAfterTime(
+              convertDrinks(data.total),
+              (new Date() - new Date(data.time + "+00:00")) / 1000 / 3600
+            );
+            setHtmlBac(bac);
+          }
+        });
+      };
+    </script>
+  </body>
+</html>

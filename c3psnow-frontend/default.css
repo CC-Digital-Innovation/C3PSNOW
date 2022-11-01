@@ -1,0 +1,264 @@
+body {
+  font-family: "Nunito", sans-serif;
+  background-color: black;
+  color: white;
+}
+
+*,
+*:before,
+*:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+form {
+  max-width: 300px;
+  margin: 10px auto;
+  padding: 10px 20px;
+  background: #f4f7f8;
+  border-radius: 8px;
+}
+
+h1 {
+  margin: 0 0 30px 0;
+  text-align: center;
+}
+
+header p {
+  max-width: 380px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="date"],
+input[type="datetime"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="time"],
+input[type="url"],
+textarea,
+select {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  font-size: 16px;
+  height: auto;
+  margin: 0;
+  outline: 0;
+  padding: 15px;
+  width: 100%;
+  background-color: #e8eeef;
+  color: #8a97a0;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03) inset;
+  margin-bottom: 30px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  margin: 0 4px 8px 0;
+}
+
+select {
+  padding: 6px;
+  height: 32px;
+  border-radius: 2px;
+}
+
+.quantityButton {
+  width: 45px;
+  height: 45px;
+  padding: 2px 2px 2px 2px;
+  border-radius: 25px;
+  border: 1px solid #1f4792;
+  background-color: #1f4792;
+  box-sizing: border-box;
+  font-family: "Arial", sans-serif;
+  color: #ffffff;
+  text-align: center;
+  line-height: normal;
+}
+
+.buttonLightBlue {
+  background-color: #1e98d7; /* Light Blue */
+  border: none;
+  color: white;
+  padding: 20px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
+
+.buttonTeal1 {
+  background-color: #b2d8d8; /* Light Blue */
+  border: none;
+  color: white;
+  padding: 20px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
+
+.buttonTeal2 {
+  background-color: #66b2b2; /* Light Blue */
+  border: none;
+  color: white;
+  padding: 20px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
+
+.buttonTeal3 {
+  background-color: #1f4792; /* Light Blue */
+  border: none;
+  color: white;
+  padding: 20px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
+
+.buttonTeal4 {
+  background-color: #006666; /* Light Blue */
+  border: none;
+  color: white;
+  padding: 20px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
+.buttonLightGreen {
+  background-color: #4bc970; /* Green */
+  border: none;
+  color: white;
+  padding: 20px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
+
+.visible {
+  visibility: visible !important;
+}
+.invisible {
+  visibility: hidden !important;
+}
+
+input {
+  text-align: center;
+}
+::-webkit-input-placeholder {
+  text-align: center;
+}
+:-moz-placeholder {
+  text-align: center;
+}
+
+button {
+  padding: 19px 39px 18px 39px;
+  color: #fff;
+  background-color: #4bc970;
+  font-size: 18px;
+  text-align: center;
+  font-style: normal;
+  border-radius: 5px;
+  width: 100%;
+  border: 1px solid #3ac162;
+  border-width: 1px 1px 3px;
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.1) inset;
+  margin-bottom: 10px;
+}
+
+fieldset {
+  margin-bottom: 30px;
+  border: none;
+}
+
+legend {
+  font-size: 1.4em;
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+label.light {
+  font-weight: 300;
+  display: inline;
+}
+
+.number {
+  background-color: #5fcf80;
+  color: #fff;
+  height: 30px;
+  width: 30px;
+  display: inline-block;
+  font-size: 0.8em;
+  margin-right: 4px;
+  line-height: 30px;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-radius: 100%;
+}
+
+@media screen and (min-width: 480px) {
+  form {
+    max-width: 480px;
+  }
+}
+
+.accordion-button {
+  background-color: #1f4792;
+  color: white;
+  margin: 0;
+}
+
+.btn-primary {
+  background-color: #1f4792;
+  color: white;
+  --bs-btn-border-color: #1f4792;
+}
+
+.btn-check:checked + .btn {
+  background-color: transparent;
+}
+
+.modal {
+  display: none;
+  text-align: center;
+  width: 50%;
+  margin: auto;
+}
+
+.modal-content {
+  background-color: black;
+  border-color: white;
+}
+
+.modal-footer {
+  border-top: 0;
+}
+
+#topChart {
+  background-color: white;
+}
+
+button#play {
+  box-shadow: none;
+}
+
+h1.display-2,
+h1.display-5,
+h1.display-6 {
+  margin: 0;
+}
