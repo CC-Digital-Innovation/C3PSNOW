@@ -36,5 +36,5 @@ The middle api is continuously running in a kubernetes cluster and kept up to da
 The back end of c3psnow consists of a developer instance of service now designed specifically to hold drink orders as incidents. The other half of the back end is a NoCo DB that holds user information
 
 
-## Architecutre Diagram
+## Architecture Diagram
 ![image](https://github.com/CC-Digital-Innovation/C3PSNOW/blob/main/c3psnow-frontend/images/c3arch.png?raw=true)
