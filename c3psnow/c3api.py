@@ -86,7 +86,7 @@ async def send_order(order: Order):
             description = description + f"{drink} qty: {quant} "
 
 
-    nocorul = f"{NOCOBASEURL}/findOne"
+    nocorul = f"{NOCOBASEURL}/find-one"
 
     query = {
         'where' : f"(Name,eq,{order.name})"
