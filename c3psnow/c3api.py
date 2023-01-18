@@ -275,7 +275,7 @@ async def get_names():
 
     res = requests.get(url, headers=NOCOHEAD, params=query)
     names = []
-    for record in res.json():
+    for record in res.json()['list']:
         names.append(record['Name'])
 
     return names
