@@ -265,7 +265,7 @@ async def get_bac_stats(name: str):
 @app.get('/noco/getNames', dependencies=[Depends(authorize)])
 async def get_names():
 
-    url = f"{NOCOBASEURL}/groupby"
+    url = f"{NOCOBASEURL}"
 
     query = {
         'column_name' : 'Name',
