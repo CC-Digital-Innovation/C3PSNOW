@@ -1,0 +1,7 @@
+repo: https://github.com/CC-Digital-Innovation/C3PSNOW.git
+ssh_url: git@github.com:CC-Digital-Innovation/C3PSNOW.git
+branch: main
+project_root: c3psnow
+image: c3psnow
+manifest_path: kubernetes/c3psnow-deployment.yml
+pipeline: c3psnow

@@ -1,72 +1,191 @@
 resources:
-# resource for triggering pipeline
-- name: c3psnow
-  type: git
-  icon: github
-  source:
-    uri: https://github.com/CC-Digital-Innovation/C3PSNOW.git
-    branch: main
-    username: ((git.username))
-    password: ((git.password))
-    ignore_paths:
-    - README.md
-    - pipeline.yaml
-    - kubernetes
-    - .gitignore
-# resource of where to push image
-- name: c3psnow-image
-  type: registry-image
-  icon: gitlab
-  source:
-    repository: ((gitlab.repository))/c3psnow/c3psnow
-    username: ((gitlab.username))
-    password: ((gitlab.password))
-# resource to send to slack
-- name: notifier
-  type: slack-notifier
-  source:
-    url: ((slack.webhook))
+  # resource for reconfiguring pipeline
+  - name: repo-pipeline
+    type: git
+    icon: github
+    source:
+      uri: ((repo))
+      branch: ((branch))
+      username: ((git.username))
+      password: ((git.password))
+      paths:
+        - pipeline.yml
+        - vars.yml
+  # resource for triggering pipeline; read-only
+  - name: repo-read
+    type: git
+    icon: github
+    source:
+      uri: ((repo))
+      branch: ((branch))
+      username: ((git.username))
+      password: ((git.password))
+      # determines what files trigger the pipeline, replace with "ignore_paths" if more files need to trigger
+      paths:
+        - ((project_root))  # remove if no project root directory
+        - Dockerfile
+  # resource for writing to repository; write-only to avoid retriggering pipeline
+  - name: bump-repo
+    type: git
+    icon: github
+    source:
+      uri: ((repo))
+      branch: ((branch))
+      username: ((git.username))
+      password: ((git.password))
+  # resource of where to push image
+  - name: registry
+    type: registry-image
+    icon: gitlab
+    source:
+      repository: ((gitlab.repository))/((image))
+      username: ((gitlab.username))
+      password: ((gitlab.password))
+  # resource for versioning
+  - name: version
+    type: semver
+    icon: numeric
+    source:
+      driver: git
+      uri: ((ssh_url))
+      branch: ((branch))
+      private_key: ((git.private_key))
+      file: version
+  # resource to send to slack
+  - name: notifier
+    type: slack-alert
+    icon: slack
+    source:
+      url: ((slack.webhook))
 
 # add slack resource
 resource_types:
-- name: slack-notifier
-  type: docker-image
-  source:
-    repository: mockersf/concourse-slack-notifier
+  - name: slack-alert
+    type: docker-image
+    source:
+      repository: arbourd/concourse-slack-alert-resource
 
 jobs:
-- name: build-and-push
-  plan:
-  - put: notifier
-    params:
-      alert_type: started
-  - get: c3psnow
-    trigger: true
-  - task: build-task-image
-    privileged: true
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: concourse/oci-build-task
-      inputs:
-      - name: c3psnow
-      outputs:
-      - name: image
+  - name: set-pipeline
+    plan:
+      - get: repo-pipeline
+        trigger: true
+      - put: notifier
+        params:
+          alert_type: started
+      - set_pipeline: ((pipeline))
+        file: repo-pipeline/pipeline.yml
+        var_files:
+          - repo-pipeline/vars.yml
+      - put: notifier
+        params:
+          alert_type: success
+    on_failure:
+      put: notifier
       params:
-        CONTEXT: c3psnow
-      run:
-        path: build
-  - put: c3psnow-image
-    params:
-      image: image/image.tar
-      version: '0.1.1'
-      bump_aliases: true
-  - put: notifier
-    params:
-      alert_type: success
-  on_failure:
-    put: notifier
-    params:
-      alert_type: failed
+        alert_type: failed
+    on_abort:
+      put: notifier
+      params:
+        alert_type: aborted
+    on_error:
+      put: notifier
+      params:
+        alert_type: errored
+
+  - name: build-and-push-image
+    plan:
+      - get: repo-read
+        trigger: true
+      - put: notifier
+        params:
+          alert_type: started
+      - task: build-task-image
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: concourse/oci-build-task
+          inputs:
+            - name: repo-read
+          outputs:
+            - name: image
+            - name: repo-read
+          params:
+            CONTEXT: repo-read
+          run:
+            path: build
+      - get: version
+        params:
+          bump: patch
+      - load_var: version_num
+        file: version/version
+      - put: registry
+        params:
+          image: image/image.tar
+          version: ((.:version_num))
+          bump_aliases: true
+      - get: bump-repo
+      - task: bump-with-yq
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: docker.io/mikefarah/yq
+          inputs:
+            - name: bump-repo
+          outputs:
+            - name: bump-repo
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                cd bump-repo
+                yq -i '.spec.template.spec.containers[0].image = "((gitlab.repository))/((image)):((.:version_num))"' ((manifest_path))
+            user: root
+      - task: git-commit-bump
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: docker.io/alpine/git
+          inputs:
+            - name: bump-repo
+          outputs:
+            - name: bump-repo
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                cd bump-repo
+                git config --global user.email '<>'
+                git config --global user.name "Concourse Bot"
+                git add ((manifest_path))
+                git commit -m 'bump to ((.:version_num))'
+      - put: bump-repo
+        params:
+          repository: bump-repo
+      - put: version
+        params:
+          file: version/version
+      - put: notifier
+        params:
+          alert_type: success
+    on_failure:
+      put: notifier
+      params:
+        alert_type: failed
+    on_abort:
+      put: notifier
+      params:
+        alert_type: aborted
+    on_error:
+      put: notifier
+      params:
+        alert_type: errored
