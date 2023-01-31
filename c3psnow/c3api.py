@@ -22,7 +22,7 @@ SNOW_PASS = os.getenv('SNOW_PASS')
 NOCO_KEY = os.getenv('NOCO_KEY')
 NOCOBASEURL = os.getenv('NOCO_URL')
 NOCOHEAD  = {
-        'xc-auth': NOCO_KEY,
+        'xc-token': NOCO_KEY,
         'Content-Type': 'application/json'
     }
 
