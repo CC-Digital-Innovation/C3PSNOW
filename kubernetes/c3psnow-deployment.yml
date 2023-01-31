@@ -22,6 +22,7 @@ spec:
             export NOCO_KEY="{{ .Data.data.noco_key }}"
             export NOCO_URL="{{ .Data.data.noco_url }}"
           {{- end }}
+        vault.hashicorp.com/ca-cert: /run/secrets/kubernetes.io/serviceaccount/ca.crt
       labels:
         app: c3psnow
     spec:
