@@ -23,6 +23,7 @@ spec:
             export NOCO_URL="{{ .Data.data.noco_url }}"
           {{- end }}
         vault.hashicorp.com/ca-cert: /run/secrets/kubernetes.io/serviceaccount/ca.crt
+        vault.hashicorp.com/agent-pre-populate-only: "true"
       labels:
         app: c3psnow
     spec:
@@ -38,7 +39,7 @@ spec:
               memory: 1Gi
             requests:
               cpu: 50m
-              memory: 100Mi
+              memory: 150Mi
       imagePullSecrets:
         - name: gitlab-cr
       serviceAccountName: c3psnow
